@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose) // required on Kotlin 2.x
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -17,21 +17,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ✅ Make Java compilation use 17
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    // ✅ Make Kotlin use JDK 17 (preferred with Kotlin 2.x)
     kotlin {
         jvmToolchain(21)
     }
 
     buildFeatures { compose = true }
 
-    // On Kotlin 2.x DO NOT set composeOptions.kotlinCompilerExtensionVersion
-    // The compose compiler is provided by the plugin above.
 
     buildTypes {
         release {
@@ -45,23 +41,31 @@ android {
 }
 
 dependencies {
+    // Core Android KTX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.activity.compose) // Activity Compose integration
 
+    // Jetpack Compose UI
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.navigation.compose)
 
 
+    // Testing - Unit Tests
     testImplementation(libs.junit)
+
+    // Testing - Android Instrumented Tests
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    androidTestImplementation(platform(libs.androidx.compose.bom)) // BOM for testing libraries
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4) // Compose UI testing
+
+    // Debugging - Tooling for development builds
+    debugImplementation(libs.androidx.compose.ui.tooling) // Full tooling for debug
+    debugImplementation(libs.androidx.compose.ui.test.manifest) // Test manifest for debug
 }
