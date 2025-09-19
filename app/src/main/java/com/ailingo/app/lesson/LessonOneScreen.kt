@@ -35,7 +35,6 @@ fun LessonOneScreen(
         }
 
         is FillBlankActivity -> {
-            // ✅ Key change: allow Continue when the chosen word is correct
             vm.isCurrentComplete() || (vm.fillChosen == act.correct)
         }
 
