@@ -1,0 +1,134 @@
+package com.ailingo.app.lesson
+
+import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ailingo.app.lesson.ui.LessonScaffold
+import com.ailingo.app.lesson.viewmodel.LessonViewModel
+import com.ailingo.app.lesson.model.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
+
+@Composable
+fun LessonTwoScreen(
+    onLessonComplete: () -> Unit,
+    onBackFromLesson: () -> Unit
+) {
+    val vm: LessonViewModel = viewModel()
+
+    // Load Lesson 2 data
+    LaunchedEffect(Unit) {
+        vm.loadLessonTwo()
+    }
+
+    val act = vm.lesson.activities[vm.index]
+    val title = "Lesson 2: ${vm.lesson.title}"
+
+    // Enable "Continue" per-activity using robust signals.
+    val isNextEnabled = when (act) {
+        is IntroActivity -> true
+        is RecapActivity -> true
+
+        is McqActivity -> {
+            vm.isCurrentComplete() ||
+                    (vm.feedback?.contains("✅") == true) ||
+                    (vm.feedback?.startsWith("🎉") == true)
+        }
+
+        is MatchActivity -> {
+            // Allow when all rows are matched (and/or VM already marked done)
+            vm.isCurrentComplete() || vm.matchSelections.size == act.rows.size
+        }
+
+        is FillBlankActivity -> {
+            // ✅ Key change: allow Continue when the chosen word is correct
+            vm.isCurrentComplete() || (vm.fillChosen == act.correct)
+        }
+
+        is FreePromptActivity -> {
+            vm.isCurrentComplete() || vm.showMockReply
+        }
+
+        else -> vm.isCurrentComplete()
+    }
+
+    LessonScaffold(
+        title = title,
+        hearts = vm.hearts,
+        progress = vm.progress,
+        isNextEnabled = isNextEnabled,
+        onBack = {
+            if (vm.index == 0) onBackFromLesson() else vm.onBack()
+        },
+        onNext = {
+            if (vm.index == vm.lesson.activities.lastIndex) {
+                onLessonComplete()
+            } else {
+                vm.onNext()
+            }
+        }
+    ) {
+        when (act) {
+            is IntroActivity -> {
+                com.ailingo.app.lesson.ui.activities.IntroCard(
+                    heading = act.heading, bullets = act.bullets
+                )
+            }
+
+            is McqActivity -> {
+                com.ailingo.app.lesson.ui.activities.MultipleChoiceCard(
+                    act = act,
+                    onSelect = { opt -> vm.onSelectMcq(opt, act) },
+                    feedback = vm.feedback
+                )
+                // Optional auto-advance after correct MCQ
+                LaunchedEffect(vm.index, vm.isCurrentComplete()) {
+                    if (vm.isCurrentComplete()) {
+                        delay(600)
+                        if (vm.index < vm.lesson.activities.lastIndex) vm.onNext()
+                    }
+                }
+            }
+
+            is MatchActivity -> {
+                com.ailingo.app.lesson.ui.activities.MatchPairsCard(
+                    act = act,
+                    currentMatches = vm.matchSelections,
+                    onPick = { i, choice -> vm.onMatchPick(i, choice, act) },
+                    feedback = vm.feedback
+                )
+            }
+
+            is FillBlankActivity -> {
+                com.ailingo.app.lesson.ui.activities.FillBlankCard(
+                    act = act,
+                    chosen = vm.fillChosen,
+                    onChoose = { s -> vm.onFillSelect(s, act) },
+                    feedback = vm.feedback
+                )
+                // Optional Auto-advance after correct fill in
+                LaunchedEffect(vm.index, vm.fillChosen) {
+                    if (vm.fillChosen == act.correct) {
+                        delay(600)
+                        if (vm.index < vm.lesson.activities.lastIndex) vm.onNext()
+                    }
+                }
+            }
+
+            is FreePromptActivity -> {
+                com.ailingo.app.lesson.ui.activities.FreePromptPracticeCard(
+                    act = act,
+                    userText = vm.userFreePrompt,
+                    onChange = vm::onFreePromptChange,
+                    onSubmit = { vm.onFreePromptSubmit(act) },
+                    showMockReply = vm.showMockReply,
+                    feedback = vm.feedback
+                )
+            }
+
+            is RecapActivity -> {
+                com.ailingo.app.lesson.ui.activities.RecapCard(act)
+            }
+        }
+    }
+}

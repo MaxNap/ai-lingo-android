@@ -21,15 +21,4 @@ fun HomeScreen() {
     }
 }
 
-@Composable
-fun LearnScreen(navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Button(onClick = { navController.navigate("lesson/1/1") }) {
-            Text("Start Lesson 1")
-        }
-    }
-}
+

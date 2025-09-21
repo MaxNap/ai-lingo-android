@@ -15,8 +15,9 @@ import com.ailingo.app.lesson.model.McqOption
 
 class LessonViewModel : ViewModel() {
 
-    // Current lesson definition (hardcoded for Lesson 1)
-    val lesson: LessonDefinition = HardcodedLessons.lesson1
+    // Current lesson definition (changed from val to var to support multiple lessons)
+    var lesson: LessonDefinition by mutableStateOf(HardcodedLessons.lesson1)
+        private set
 
     // Index of the current activity
     var index by mutableStateOf(0)
@@ -26,8 +27,8 @@ class LessonViewModel : ViewModel() {
     var hearts by mutableStateOf(3)
         private set
 
-    // Per-activity completion flags
-    private val completed = BooleanArray(lesson.activities.size) { false }
+    // Per-activity completion flags (changed from val to var to support lesson switching)
+    private var completed = BooleanArray(lesson.activities.size) { false }
 
     // Transient UI feedback string (success/error/hints)
     var feedback by mutableStateOf<String?>(null)
@@ -54,6 +55,15 @@ class LessonViewModel : ViewModel() {
         get() = completed.count { it }.toFloat() / lesson.activities.size
 
     fun isCurrentComplete(): Boolean = completed[index]
+
+    // NEW: Load Lesson 2 function
+    fun loadLessonTwo() {
+        lesson = HardcodedLessons.lesson2
+        index = 0
+        hearts = 3
+        completed = BooleanArray(lesson.activities.size) { false }
+        resetTransientForIndex(0)
+    }
 
     // ----------------- Navigation helpers -----------------
 
@@ -130,7 +140,7 @@ class LessonViewModel : ViewModel() {
         fillChosen = choice
         if (choice == act.correct) {
             markDone()
-            feedback = "✅ Nice! “$choice” is correct."
+            feedback = "✅ Nice! \"$choice\" is correct."
         } else {
             if (hearts > 0) hearts--
             feedback = "❌ Try again."
@@ -150,6 +160,6 @@ class LessonViewModel : ViewModel() {
         }
         showMockReply = true
         markDone()
-        feedback = "Nice! That’s a clear prompt. ✅"
+        feedback = "Nice! That's a clear prompt. ✅"
     }
 }

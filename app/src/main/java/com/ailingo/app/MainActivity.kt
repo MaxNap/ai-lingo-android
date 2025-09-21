@@ -19,6 +19,8 @@ import com.ailingo.app.ui.screens.LearnScreen
 import com.ailingo.app.ui.screens.StudioScreen
 import com.ailingo.app.ui.screens.ProfileScreen
 import com.ailingo.app.lesson.LessonOneScreen
+import com.ailingo.app.lesson.LessonTwoScreen
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,9 +74,16 @@ class MainActivity : ComponentActivity() {
                         composable("studio") { StudioScreen() }
                         composable("profile"){ ProfileScreen() }
 
-                        // Lesson detail route (bottom bar hidden)
+                        // Lesson detail routes (bottom bar hidden)
                         composable("lesson/1/1") {
                             LessonOneScreen(
+                                onLessonComplete = { navController.popBackStack() }, // return to Learn tab
+                                onBackFromLesson = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("lesson/1/2") {
+                            LessonTwoScreen(
                                 onLessonComplete = { navController.popBackStack() }, // return to Learn tab
                                 onBackFromLesson = { navController.popBackStack() }
                             )
