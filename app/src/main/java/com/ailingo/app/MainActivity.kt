@@ -20,9 +20,11 @@ import com.ailingo.app.ui.screens.LearnScreen
 import com.ailingo.app.ui.screens.StudioScreen
 import com.ailingo.app.ui.screens.ProfileScreen
 import com.ailingo.app.lesson.LessonOneScreen
+import com.ailingo.app.lesson.LessonTwoScreen
 import com.ailingo.app.ui.auth.SignInScreen
 import com.ailingo.app.ui.auth.SignUpScreen
 import com.google.firebase.auth.FirebaseAuth
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,6 +105,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+
+                        // Lesson detail routes (bottom bar hidden)
+
                         composable(Routes.SignUp) {
                             SignUpScreen(
                                 onSignedUp = {
@@ -122,9 +127,17 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.Profile){ ProfileScreen() }
 
                         // --- Lessons (hide bottom bar) ---
+
                         composable("lesson/1/1") {
                             LessonOneScreen(
                                 onLessonComplete = { navController.popBackStack() },
+                                onBackFromLesson = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("lesson/1/2") {
+                            LessonTwoScreen(
+                                onLessonComplete = { navController.popBackStack() }, // return to Learn tab
                                 onBackFromLesson = { navController.popBackStack() }
                             )
                         }
@@ -134,6 +147,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
+data class TabDest(val route: String, val title: String)
 
 // Route constants used by MainActivity & tabs.
 // Keeping them here avoids "Unresolved reference 'Routes'" problems.
@@ -148,3 +164,4 @@ private object Routes {
 }
 
 data class TabDest(val route: String, val title: String)
+
