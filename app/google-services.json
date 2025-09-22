@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "984799742612",
+    "project_id": "ailingo-87e97",
+    "storage_bucket": "ailingo-87e97.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:984799742612:android:9cc3aff8660006daf98281",
+        "android_client_info": {
+          "package_name": "com.ailingo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6bsBRhY5XiBySy4Pma2w7iTF57xjpLqw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
