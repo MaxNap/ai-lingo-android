@@ -1,6 +1,9 @@
 package com.ailingo.app
 
+import android.R.attr.onClick
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,6 +35,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AILingoTheme {
+                val context = LocalContext.current
                 val navController = rememberNavController()
 
                 // Define bottom tabs once
@@ -63,12 +68,16 @@ class MainActivity : ComponentActivity() {
                                 selectedTab = selectedIndex,
                                 onTabSelected = { index ->
                                     val dest = tabs[index].route
+                                    if (dest == Routes.Profile) {
+                                        context.startActivity(Intent(context, ProfileScreen::class.java))
+                                    } else {
                                     navController.navigate(dest) {
                                         // Keep a single instance of each tab and restore state
                                         // Using the graph's start destination might pop Splash off as well,
                                         // but by this time we are already past auth.
                                         launchSingleTop = true
                                         restoreState = true
+                                    }
                                     }
                                 }
                             )
@@ -82,6 +91,13 @@ class MainActivity : ComponentActivity() {
                             .padding(inner)
                             .fillMaxSize()
                     ) {
+
+                        // Top-level tabs (kept in bottom nav backstack)
+                        composable("home")   { HomeScreen() }
+                        composable("learn")  { LearnScreen(navController) } // pass navController so it can navigate to lessons
+                        composable("studio") { StudioScreen() }
+                        composable("profile"){ ProfileScreen() }
+
                         // --- Splash gate: decide start based on auth ---
                         composable(Routes.Splash) {
                             LaunchedEffect(Unit) {
@@ -124,6 +140,11 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.Home)   { HomeScreen() }
                         composable(Routes.Learn)  { LearnScreen(navController) }
                         composable(Routes.Studio) { StudioScreen() }
+
+                        //composable(Routes.Profile){ ProfileScreen() }
+
+                        // --- Lessons (hide bottom bar) ---
+
                         composable(Routes.Profile){ ProfileScreen() }
 
                         // --- Lessons (hide bottom bar) ---
@@ -150,6 +171,13 @@ class MainActivity : ComponentActivity() {
 
 
 data class TabDest(val route: String, val title: String)
+
+// ** Commented out because it wouldn't run otherwise -- DON'T OVERLOOK
+//data class TabDest(val route: String, val title: String)
+
+
+data class TabDest(val route: String, val title: String)
+
 
 // Route constants used by MainActivity & tabs.
 // Keeping them here avoids "Unresolved reference 'Routes'" problems.
