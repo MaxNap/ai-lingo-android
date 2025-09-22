@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
@@ -23,6 +24,11 @@ import com.ailingo.app.ui.screens.LearnScreen
 import com.ailingo.app.ui.screens.StudioScreen
 import com.ailingo.app.ui.screens.ProfileScreen
 import com.ailingo.app.lesson.LessonOneScreen
+import com.ailingo.app.lesson.LessonTwoScreen
+import com.ailingo.app.ui.auth.SignInScreen
+import com.ailingo.app.ui.auth.SignUpScreen
+import com.google.firebase.auth.FirebaseAuth
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,17 +40,26 @@ class MainActivity : ComponentActivity() {
 
                 // Define bottom tabs once
                 val tabs = listOf(
-                    TabDest("home", "Home"),
-                    TabDest("learn", "Learn"),
-                    TabDest("studio", "Studio"),
-                    TabDest("profile", "Profile"),
+                    TabDest(Routes.Home,   "Home"),
+                    TabDest(Routes.Learn,  "Learn"),
+                    TabDest(Routes.Studio, "Studio"),
+                    TabDest(Routes.Profile,"Profile"),
                 )
 
-                // Observe route to compute selected index & hide bar for lesson screens
+                // Observe current route
                 val backStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = backStackEntry?.destination?.route ?: tabs.first().route
-                val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
-                val hideBottomBar = currentRoute.startsWith("lesson/")
+                val currentRoute = backStackEntry?.destination?.route ?: Routes.Splash
+
+                // Bottom bar should be hidden on Splash/Auth/Lessons
+                val hideBottomBar =
+                    currentRoute == Routes.Splash ||
+                            currentRoute == Routes.SignIn ||
+                            currentRoute == Routes.SignUp ||
+                            currentRoute.startsWith("lesson/")
+
+                // Compute selected tab index (only matters when bar visible)
+                val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }
+                    .let { if (it >= 0) it else 0 }
 
                 Scaffold(
                     bottomBar = {
@@ -58,7 +73,8 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                     navController.navigate(dest) {
                                         // Keep a single instance of each tab and restore state
-                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                        // Using the graph's start destination might pop Splash off as well,
+                                        // but by this time we are already past auth.
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -70,18 +86,18 @@ class MainActivity : ComponentActivity() {
                 ) { inner ->
                     NavHost(
                         navController = navController,
-                        startDestination = tabs.first().route,
+                        startDestination = Routes.Splash,
                         modifier = Modifier
                             .padding(inner)
                             .fillMaxSize()
                     ) {
-<<<<<<< Updated upstream
+
                         // Top-level tabs (kept in bottom nav backstack)
                         composable("home")   { HomeScreen() }
                         composable("learn")  { LearnScreen(navController) } // pass navController so it can navigate to lessons
                         composable("studio") { StudioScreen() }
                         composable("profile"){ ProfileScreen() }
-=======
+
                         // --- Splash gate: decide start based on auth ---
                         composable(Routes.Splash) {
                             LaunchedEffect(Unit) {
@@ -124,14 +140,24 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.Home)   { HomeScreen() }
                         composable(Routes.Learn)  { LearnScreen(navController) }
                         composable(Routes.Studio) { StudioScreen() }
+
                         //composable(Routes.Profile){ ProfileScreen() }
 
                         // --- Lessons (hide bottom bar) ---
->>>>>>> Stashed changes
 
-                        // Lesson detail route (bottom bar hidden)
+                        composable(Routes.Profile){ ProfileScreen() }
+
+                        // --- Lessons (hide bottom bar) ---
+
                         composable("lesson/1/1") {
                             LessonOneScreen(
+                                onLessonComplete = { navController.popBackStack() },
+                                onBackFromLesson = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("lesson/1/2") {
+                            LessonTwoScreen(
                                 onLessonComplete = { navController.popBackStack() }, // return to Learn tab
                                 onBackFromLesson = { navController.popBackStack() }
                             )
@@ -143,11 +169,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-<<<<<<< Updated upstream
+
 data class TabDest(val route: String, val title: String)
-=======
+
 // ** Commented out because it wouldn't run otherwise -- DON'T OVERLOOK
 //data class TabDest(val route: String, val title: String)
+
+
+data class TabDest(val route: String, val title: String)
+
 
 // Route constants used by MainActivity & tabs.
 // Keeping them here avoids "Unresolved reference 'Routes'" problems.
@@ -163,4 +193,3 @@ private object Routes {
 
 data class TabDest(val route: String, val title: String)
 
->>>>>>> Stashed changes

@@ -10,13 +10,19 @@ import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
 
 @Composable
-fun LessonOneScreen(
+fun LessonTwoScreen(
     onLessonComplete: () -> Unit,
     onBackFromLesson: () -> Unit
 ) {
     val vm: LessonViewModel = viewModel()
+
+    // Load Lesson 2 data
+    LaunchedEffect(Unit) {
+        vm.loadLessonTwo()
+    }
+
     val act = vm.lesson.activities[vm.index]
-    val title = "Lesson 1: ${vm.lesson.title}"
+    val title = "Lesson 2: ${vm.lesson.title}"
 
     // Enable "Continue" per-activity using robust signals.
     val isNextEnabled = when (act) {
@@ -35,6 +41,7 @@ fun LessonOneScreen(
         }
 
         is FillBlankActivity -> {
+            // ✅ Key change: allow Continue when the chosen word is correct
             vm.isCurrentComplete() || (vm.fillChosen == act.correct)
         }
 
@@ -99,7 +106,7 @@ fun LessonOneScreen(
                     onChoose = { s -> vm.onFillSelect(s, act) },
                     feedback = vm.feedback
                 )
-                // Optional auto-advance after correct fill-in
+                // Optional Auto-advance after correct fill in
                 LaunchedEffect(vm.index, vm.fillChosen) {
                     if (vm.fillChosen == act.correct) {
                         delay(600)
