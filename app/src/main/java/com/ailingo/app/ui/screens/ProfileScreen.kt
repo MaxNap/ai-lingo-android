@@ -1,8 +1,5 @@
 package com.ailingo.app.ui.screens
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,70 +25,62 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ailingo.app.R
 
-class ProfileScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_profile)
+@Composable
+fun ProfileScreen() {
+    Column(
+        modifier = Modifier.fillMaxSize()
+            .padding(top = 100.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+
+
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.profile_temp),
+            contentDescription = "Profile Picture",
+            modifier = Modifier
+                .size(150.dp)
+                .clip(CircleShape)
+        )
+        Text("Name Here")
+        Text("Level: 1")
+        Spacer(modifier = Modifier.height(25.dp))
+        PlaceholderGrid()
     }
 }
+@Composable
+fun PlaceholderGrid() {
+    val items = List(3) { "Item ${it + 1}" } // Placeholder items
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ){
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3), // 3 columns
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        contentPadding = PaddingValues(8.dp),
+    ) {
+        items(items) { item ->
+            Box(
+                modifier = Modifier
+                    .height(150.dp)
+                    .fillMaxWidth()
+                    .padding(4.dp)
+            ) {
+                Text(text = "Badge")
+                Image(
+                    painter = painterResource(id = R.drawable.profile_temp),
+                    contentDescription = "Profile Picture",
+                )
+            }
+        }
+    }
+}}
 
-//@Composable
-//fun ProfileScreen() {
-//    Column(
-//        modifier = Modifier.fillMaxSize()
-//            .padding(top = 100.dp),
-//        horizontalAlignment = Alignment.CenterHorizontally
-//
-//
-//    ) {
-//        Image(
-//            painter = painterResource(id = R.drawable.profile_temp),
-//            contentDescription = "Profile Picture",
-//            modifier = Modifier
-//                .size(150.dp)
-//                .clip(CircleShape)
-//        )
-//        Text("Name Here")
-//        Text("Level: 1")
-//        Spacer(modifier = Modifier.height(25.dp))
-//        PlaceholderGrid()
-//    }
-//}
-//@Composable
-//fun PlaceholderGrid() {
-//    val items = List(3) { "Item ${it + 1}" } // Placeholder items
-//    Box(
-//        modifier = Modifier.fillMaxSize(),
-//        contentAlignment = Alignment.Center
-//    ){
-//    LazyVerticalGrid(
-//        columns = GridCells.Fixed(3), // 3 columns
-//        modifier = Modifier.fillMaxSize(),
-//        verticalArrangement = Arrangement.Center,
-//        horizontalArrangement = Arrangement.SpaceEvenly,
-//        contentPadding = PaddingValues(8.dp),
-//    ) {
-//        items(items) { item ->
-//            Box(
-//                modifier = Modifier
-//                    .height(150.dp)
-//                    .fillMaxWidth()
-//                    .padding(4.dp)
-//            ) {
-//                Text(text = "Badge")
-//                Image(
-//                    painter = painterResource(id = R.drawable.profile_temp),
-//                    contentDescription = "Profile Picture",
-//                )
-//            }
-//        }
-//    }
-//}}
-//
-//@Preview
-//@Composable
-//fun PreviewProfileScreen() {
-//    ProfileScreen()
-//    PlaceholderGrid()
-//}
+@Preview
+@Composable
+fun PreviewProfileScreen() {
+    ProfileScreen()
+    PlaceholderGrid()
+}

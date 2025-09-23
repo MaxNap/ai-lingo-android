@@ -1,6 +1,3 @@
-import com.android.tools.r8.internal.de
-import org.gradle.kotlin.dsl.implementation
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
