@@ -163,5 +163,5 @@ private object Routes {
     const val Profile = "profile"
 }
 
-data class TabDest(val route: String, val title: String)
+
 
