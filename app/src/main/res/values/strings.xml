@@ -1,5 +1,3 @@
 <resources>
     <string name="app_name">AILingo</string>
-    <string name="username">Jane Shepard</string>
-    <string name="currentLevel">Level: </string>
 </resources>
