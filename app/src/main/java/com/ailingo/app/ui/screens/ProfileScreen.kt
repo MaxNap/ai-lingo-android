@@ -1,23 +1,32 @@
 package com.ailingo.app.ui.screens
 
-import android.R.color.black
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -28,15 +37,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ailingo.app.R
 
-/* Profile Page:
-        --
-* */
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    // You can pass the user's details as parameters from your ViewModel or parent Composable
+    userName: String = "Your Name",
+    userEmail: String = "your.email@example.com"
+) {
     val gradientBrush = remember {
         Brush.sweepGradient(
             listOf(
@@ -48,67 +60,133 @@ fun ProfileScreen() {
     }
     val borderWidth = 4.dp
 
+    // Added a Column with verticalScroll to handle different screen sizes
     Column(
-        modifier = Modifier.fillMaxSize()
-            .padding(top = 100.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()) // Makes the page scrollable
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-
-
     ) {
-        //
+        Spacer(modifier = Modifier.height(60.dp)) // Pushes content down from the top
+
+        // --- User Info Section ---
         Image(
-            painter = painterResource(id = R.drawable.ailingo_logo), // Image is just a screenshot of the logo, so positioning is *slightly* off. Need to create correct image to replace
+            painter = painterResource(id = R.drawable.ailingo_logo),
             contentDescription = "Profile Picture",
-            contentScale = ContentScale.Inside,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(150.dp)
-                .clip(CircleShape)
                 .border(
                     BorderStroke(borderWidth, gradientBrush),
                     CircleShape
                 )
                 .padding(borderWidth)
+                .clip(CircleShape)
         )
-        Text("Name Here")
-        Text("Level: 1")
-        Spacer(modifier = Modifier.height(25.dp))
-        PlaceholderGrid()
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = userName,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = userEmail,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // --- Account Section ---
+        ProfileSection(title = "Account") {
+            ProfileButton(text = "Edit Password", onClick = { /* TODO: Handle click */ })
+            ProfileButton(text = "Notifications", onClick = { /* TODO: Handle click */ })
+            ProfileButton(text = "Settings", onClick = { /* TODO: Handle click */ })
+            ProfileButton(text = "Support", onClick = { /* TODO: Handle click */ })
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        // --- About Section ---
+        ProfileSection(title = "About") {
+            ProfileButton(text = "Privacy Policy", onClick = { /* TODO: Handle click */ })
+            ProfileButton(text = "Terms of Service", onClick = { /* TODO: Handle click */ })
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
+
+/**
+ * A composable for creating a titled section with content.
+ */
 @Composable
-fun PlaceholderGrid() {
-    val items = List(3) { "Item ${it + 1}" } // Placeholder items
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ){
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3), // 3 columns
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            contentPadding = PaddingValues(8.dp),
+private fun ProfileSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            items(items) { item ->
-                Box(
-                    modifier = Modifier
-                        .height(150.dp)
-                        .fillMaxWidth()
-                        .padding(4.dp)
-                ) {
-                    Text(text = "Badge")
-                    Image(
-                        painter = painterResource(id = R.drawable.profile_temp),
-                        contentDescription = "Profile Picture",
-                    )
-                }
+            Column {
+                content()
             }
         }
-    }}
+    }
+}
 
-@Preview
+/**
+ * A styled button for the profile page lists.
+ */
 @Composable
-fun PreviewProfileScreen() {
-    ProfileScreen()
-    PlaceholderGrid()
+private fun ProfileButton(
+    text: String,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = null, // Handled by the parent Card
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = text, fontSize = 16.sp)
+            Spacer(modifier = Modifier.weight(1f)) // Pushes the icon to the end
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = Color.Gray
+            )
+        }
+    }
+    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun PreviewProfileScreen() {
+
+    ProfileScreen(
+        userName = "AI Lingo User",
+        userEmail = "lingo.user@email.com"
+
+    )
 }

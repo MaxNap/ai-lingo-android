@@ -1,14 +1,26 @@
 package com.ailingo.app
 
 import android.os.Bundle
+import android.view.animation.OvershootInterpolator
+import android.window.SplashScreen
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -24,6 +36,7 @@ import com.ailingo.app.lesson.LessonTwoScreen
 import com.ailingo.app.ui.auth.SignInScreen
 import com.ailingo.app.ui.auth.SignUpScreen
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 
 
 class MainActivity : ComponentActivity() {
@@ -38,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     TabDest(Routes.Home,   "Home"),
                     TabDest(Routes.Learn,  "Learn"),
                     TabDest(Routes.Studio, "Studio"),
-                    TabDest(Routes.Profile,"Profile"),
+                    TabDest(Routes.ProfileSplash,"Profile"),
                 )
 
                 // Observe current route
@@ -124,7 +137,8 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.Home)   { HomeScreen() }
                         composable(Routes.Learn)  { LearnScreen(navController) }
                         composable(Routes.Studio) { StudioScreen() }
-                        composable(Routes.Profile){ ProfileScreen() }
+                        composable(Routes.ProfileSplash){ ProfileSplashScreen(navController = navController) }
+                        composable(Routes.ProfileScreen) { ProfileScreen() }
 
                         // --- Lessons (hide bottom bar) ---
 
@@ -160,8 +174,45 @@ private object Routes {
     const val Home    = "home"
     const val Learn   = "learn"
     const val Studio  = "studio"
-    const val Profile = "profile"
+
+    // Profile Page
+    const val ProfileSplash = "profile_splash"
+    const val ProfileScreen = "profilescreen"
 }
+
+@Composable
+fun ProfileSplashScreen(navController: NavController) {
+    val scale = remember {
+        Animatable(0f)
+    }
+    val translationY = remember {
+        Animatable(0f)
+    }
+    LaunchedEffect(key1 = true) {
+        scale.animateTo(
+            targetValue = 0.3f,
+            animationSpec = tween(
+                durationMillis = 500,
+                easing = {
+                    OvershootInterpolator(2f).getInterpolation(it)
+                }
+            )
+        )
+        delay(3000L)
+        navController.navigate("ProfileScreen") {
+            popUpTo("ProfileSplash")
+        }
+    }
+    Box(contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Image(painter = painterResource(id = R.drawable.ailingo_logo),
+            contentDescription = "Logo",
+            modifier = Modifier.fillMaxSize(scale.value)
+        )
+    }
+}
+
 
 
 
