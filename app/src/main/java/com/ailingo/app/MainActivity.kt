@@ -37,7 +37,7 @@ import com.ailingo.app.ui.auth.SignInScreen
 import com.ailingo.app.ui.auth.SignUpScreen
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
-
+import com.ailingo.app.ui.auth.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
                 // Bottom bar should be hidden on Splash/Auth/Lessons
                 val hideBottomBar =
                     currentRoute == Routes.Splash ||
+                            currentRoute == Routes.Welcome ||
                             currentRoute == Routes.SignIn ||
                             currentRoute == Routes.SignUp ||
                             currentRoute.startsWith("lesson/")
@@ -99,10 +100,19 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.Splash) {
                             LaunchedEffect(Unit) {
                                 val isSignedIn = FirebaseAuth.getInstance().currentUser != null
-                                navController.navigate(if (isSignedIn) Routes.Home else Routes.SignIn) {
+                                // CHANGED: go to Welcome if not signed in
+                                navController.navigate(if (isSignedIn) Routes.Home else Routes.Welcome) {
                                     popUpTo(Routes.Splash) { inclusive = true }
                                 }
                             }
+                        }
+
+                        // NEW: Welcome page
+                        composable(Routes.Welcome) {
+                            WelcomeScreen(
+                                onSignIn = { navController.navigate(Routes.SignIn) },
+                                onSignUp = { navController.navigate(Routes.SignUp) }
+                            )
                         }
 
                         // --- Auth screens ---
@@ -118,9 +128,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-
                         // Lesson detail routes (bottom bar hidden)
-
                         composable(Routes.SignUp) {
                             SignUpScreen(
                                 onSignedUp = {
@@ -134,14 +142,13 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // --- Top-level tabs (shown when authenticated) ---
-                        composable(Routes.Home)   { HomeScreen() }
+                        composable(Routes.Home)   { HomeScreen(navController) }
                         composable(Routes.Learn)  { LearnScreen(navController) }
                         composable(Routes.Studio) { StudioScreen() }
                         composable(Routes.ProfileSplash){ ProfileSplashScreen(navController = navController) }
                         composable(Routes.ProfileScreen) { ProfileScreen() }
 
                         // --- Lessons (hide bottom bar) ---
-
                         composable("lesson/1/1") {
                             LessonOneScreen(
                                 onLessonComplete = { navController.popBackStack() },
@@ -162,13 +169,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 data class TabDest(val route: String, val title: String)
 
 // Route constants used by MainActivity & tabs.
-// Keeping them here avoids "Unresolved reference 'Routes'" problems.
 private object Routes {
     const val Splash  = "splash"
+    const val Welcome = "welcome"
     const val SignIn  = "auth/signin"
     const val SignUp  = "auth/signup"
     const val Home    = "home"
@@ -182,20 +188,14 @@ private object Routes {
 
 @Composable
 fun ProfileSplashScreen(navController: NavController) {
-    val scale = remember {
-        Animatable(0f)
-    }
-    val translationY = remember {
-        Animatable(0f)
-    }
+    val scale = remember { Animatable(0f) }
+    val translationY = remember { Animatable(0f) }
     LaunchedEffect(key1 = true) {
         scale.animateTo(
             targetValue = 0.3f,
             animationSpec = tween(
                 durationMillis = 500,
-                easing = {
-                    OvershootInterpolator(2f).getInterpolation(it)
-                }
+                easing = { OvershootInterpolator(2f).getInterpolation(it) }
             )
         )
         delay(3000L)
@@ -203,16 +203,14 @@ fun ProfileSplashScreen(navController: NavController) {
             popUpTo("ProfileSplash")
         }
     }
-    Box(contentAlignment = Alignment.Center,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
     ) {
-        Image(painter = painterResource(id = R.drawable.ailingo_logo),
+        Image(
+            painter = painterResource(id = R.drawable.ailingo_logo),
             contentDescription = "Logo",
             modifier = Modifier.fillMaxSize(scale.value)
         )
     }
 }
-
-
-
-

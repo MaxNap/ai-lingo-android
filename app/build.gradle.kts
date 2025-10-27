@@ -59,6 +59,14 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.navigation.compose)
+    // Compose BOM if you use it
+    implementation(platform("androidx.compose:compose-bom:2024.09.01"))
+
+    // Material 3
+    implementation("androidx.compose.material3:material3")
+
+    // Foundation (provides KeyboardOptions)
+    implementation("androidx.compose.foundation:foundation")
 
 
     // Testing - Unit Tests

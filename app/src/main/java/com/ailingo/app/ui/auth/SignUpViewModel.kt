@@ -15,12 +15,16 @@ class SignUpViewModel(
 
     fun updateEmail(v: String) { _ui.value = _ui.value.copy(email = v) }
     fun updatePassword(v: String) { _ui.value = _ui.value.copy(password = v) }
+    fun updateUsername(v: String) { _ui.value = _ui.value.copy(username = v) }
 
     fun signUp(onSuccess: () -> Unit) = viewModelScope.launch {
         _ui.value = _ui.value.copy(isLoading = true, error = null)
         try {
-            repo.signUp(_ui.value.email.trim(), _ui.value.password)
-            // Optional: send verification here
+            repo.signUp(
+                email = _ui.value.email.trim(),
+                password = _ui.value.password,
+                username = _ui.value.username.trim()
+            )
             onSuccess()
         } catch (e: Exception) {
             _ui.value = _ui.value.copy(error = mapAuthError(e))

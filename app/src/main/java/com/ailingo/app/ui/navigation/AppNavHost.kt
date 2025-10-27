@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ailingo.app.ui.auth.SignInScreen
 import com.ailingo.app.ui.auth.SignUpScreen
+import com.ailingo.app.ui.auth.WelcomeScreen
 import com.ailingo.app.ui.screens.HomeScreen
 import com.google.firebase.auth.FirebaseAuth
 
@@ -22,16 +23,26 @@ fun AppNavHost(
         startDestination = Routes.Splash,
         modifier = modifier
     ) {
-        // Splash: decides where to go based on current user
+
         composable(Routes.Splash) {
             LaunchedEffect(Unit) {
                 val isSignedIn = FirebaseAuth.getInstance().currentUser != null
-                nav.navigate(if (isSignedIn) Routes.Home else Routes.SignIn) {
+
+                nav.navigate(if (isSignedIn) Routes.Home else Routes.Welcome) {
                     popUpTo(Routes.Splash) { inclusive = true }
                 }
             }
         }
 
+
+        composable(Routes.Welcome) {
+            WelcomeScreen(
+                onSignIn = { nav.navigate(Routes.SignIn) },
+                onSignUp = { nav.navigate(Routes.SignUp) }
+            )
+        }
+
+        // --- Sign In ---
         composable(Routes.SignIn) {
             SignInScreen(
                 onSignedIn = {
@@ -43,6 +54,7 @@ fun AppNavHost(
             )
         }
 
+        // --- Sign Up ---
         composable(Routes.SignUp) {
             SignUpScreen(
                 onSignedUp = {
@@ -54,9 +66,9 @@ fun AppNavHost(
             )
         }
 
+        // --- Home ---
         composable(Routes.Home) {
-            // Your existing Home screen. Add a sign-out button somewhere in Home to return to SignIn.
-            HomeScreen()
+            HomeScreen(navController = nav)
         }
     }
 }

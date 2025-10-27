@@ -1,18 +1,27 @@
 package com.ailingo.app.ui.auth
 
 import android.util.Patterns
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+private val Purple = Color(0xFFCB39C3)
+private val Blue = Color(0xFF1AB8E2)
 
 @Composable
 fun SignInScreen(
@@ -25,48 +34,67 @@ fun SignInScreen(
     val passwordValid = remember(ui.password) { ui.password.length >= 8 }
     val formValid = emailValid && passwordValid && !ui.isLoading
 
-    Scaffold { padding ->
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            // Light header strip like your mock
+            Surface(color = Blue.copy(alpha = 0.08f)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Log In",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    )
+                }
+            }
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp, vertical = 20.dp)
         ) {
-            Text("Welcome back", style = MaterialTheme.typography.headlineSmall)
+            // ---- EMAIL ----
+            Text("Email", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
             Spacer(Modifier.height(8.dp))
-            Text("Sign in to continue", color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-            Spacer(Modifier.height(24.dp))
-
             OutlinedTextField(
                 value = ui.email,
                 onValueChange = vm::updateEmail,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Email") },
+                placeholder = { Text("Enter your email") },
                 singleLine = true,
+                shape = RoundedCornerShape(28.dp),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next
                 ),
-                isError = ui.email.isNotBlank() && !emailValid,
-                supportingText = {
-                    if (ui.email.isNotBlank() && !emailValid)
-                        Text("Enter a valid email")
-                }
+                isError = ui.email.isNotBlank() && !emailValid
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(20.dp))
 
-            var passwordVisible by remember { mutableStateOf(false) }
+            // ---- PASSWORD ----
+            Text("Password", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = ui.password,
                 onValueChange = vm::updatePassword,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Password (min 8 chars)") },
+                placeholder = { Text("Enter your password") },
                 singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                shape = RoundedCornerShape(28.dp),
+                visualTransformation = if (passwordVisible)
+                    VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
@@ -76,11 +104,7 @@ fun SignInScreen(
                         Text(if (passwordVisible) "HIDE" else "SHOW")
                     }
                 },
-                isError = ui.password.isNotBlank() && !passwordValid,
-                supportingText = {
-                    if (ui.password.isNotBlank() && !passwordValid)
-                        Text("Password must be at least 8 characters")
-                }
+                isError = ui.password.isNotBlank() && !passwordValid
             )
 
             if (ui.error != null) {
@@ -88,37 +112,58 @@ fun SignInScreen(
                 Text(ui.error!!, color = MaterialTheme.colorScheme.error)
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
+            // ---- FORGOT PASSWORD ----
+            Text(
+                "Forgot Password?",
+                color = Color.Black,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable(enabled = !ui.isLoading) {
+                    vm.resetPasswordIfEmailValid()
+                }
+            )
+
+            Spacer(Modifier.height(28.dp))
+
+            // ---- CTA ----
             Button(
                 onClick = { vm.signIn(onSuccess = onSignedIn) },
                 enabled = formValid,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Purple,
+                    contentColor = Color.White
+                )
             ) {
                 if (ui.isLoading) {
                     CircularProgressIndicator(
+                        strokeWidth = 2.dp,
                         modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp
+                        color = Color.White
                     )
                     Spacer(Modifier.width(12.dp))
                 }
-                Text("Sign In")
+                Text("Log In", fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
 
-            TextButton(
-                onClick = {
-                    vm.resetPasswordIfEmailValid()
-                },
-                enabled = !ui.isLoading
-            ) { Text("Forgot password?") }
+            Spacer(Modifier.height(28.dp))
 
-            Spacer(Modifier.height(16.dp))
-
-            TextButton(
-                onClick = onGoToSignUp,
-                enabled = !ui.isLoading
+            // ---- FOOTER ----
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
-                Text("No account? Create one")
+                Text("Don’t have an account? ")
+                Text(
+                    "Sign Up",
+                    color = Color.Black,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable(enabled = !ui.isLoading) { onGoToSignUp() }
+                )
             }
         }
     }
