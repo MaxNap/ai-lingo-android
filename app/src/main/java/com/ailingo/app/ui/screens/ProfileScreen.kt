@@ -29,7 +29,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.ailingo.app.R
+
 
 @Composable
 fun ProfileScreen(
@@ -59,6 +64,14 @@ fun ProfileScreen(
         )
     }
     val borderWidth = 4.dp
+
+    // AlertDialog Overlay
+    var showDialog by remember { mutableStateOf( false) }
+    if (showDialog){
+        com.ailingo.app.ui.components.AlertDialog(
+            onDismiss = { showDialog = false }
+        )
+    }
 
     // Added a Column with verticalScroll to handle different screen sizes
     Column(
@@ -100,18 +113,18 @@ fun ProfileScreen(
 
         // --- Account Section ---
         ProfileSection(title = "Account") {
-            ProfileButton(text = "Edit Password", onClick = { /* TODO: Handle click */ })
-            ProfileButton(text = "Notifications", onClick = { /* TODO: Handle click */ })
-            ProfileButton(text = "Settings", onClick = { /* TODO: Handle click */ })
-            ProfileButton(text = "Support", onClick = { /* TODO: Handle click */ })
+            ProfileButton(text = "Edit Password", onClick = { showDialog = true })
+            ProfileButton(text = "Notifications", onClick = { showDialog = true })
+            ProfileButton(text = "Settings", onClick = { showDialog = true })
+            ProfileButton(text = "Support", onClick = { showDialog = true })
         }
 
         Spacer(modifier = Modifier.height(30.dp))
 
         // --- About Section ---
         ProfileSection(title = "About") {
-            ProfileButton(text = "Privacy Policy", onClick = { /* TODO: Handle click */ })
-            ProfileButton(text = "Terms of Service", onClick = { /* TODO: Handle click */ })
+            ProfileButton(text = "Privacy Policy", onClick = { showDialog = true })
+            ProfileButton(text = "Terms of Service", onClick = { showDialog = true })
         }
 
         Spacer(modifier = Modifier.height(40.dp))
@@ -176,7 +189,7 @@ private fun ProfileButton(
             )
         }
     }
-    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+    HorizontalDivider(thickness = 5.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 }
 
 
