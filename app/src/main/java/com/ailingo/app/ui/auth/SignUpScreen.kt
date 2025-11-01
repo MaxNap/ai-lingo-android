@@ -43,7 +43,7 @@ fun SignUpScreen(
     val hasLower = ui.password.any { it.isLowerCase() }
     val hasDigitOrSymbol = ui.password.any { it.isDigit() || !it.isLetterOrDigit() }
     val passwordsMatch = ui.password.isNotEmpty() && ui.password == confirm
-    val usernameValid = ui.username.trim().isNotEmpty()   // ← use VM state
+    val usernameValid = ui.username.trim().isNotEmpty()
 
     val formValid =
         usernameValid && emailValid && lengthOK && hasUpper && hasLower && hasDigitOrSymbol &&
@@ -76,12 +76,12 @@ fun SignUpScreen(
                 .padding(padding)
                 .padding(horizontal = 24.dp, vertical = 20.dp)
         ) {
-            // Username (bound to VM)
+
             Text("Username", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
-                value = ui.username,                    // ← from VM
-                onValueChange = vm::updateUsername,     // ← update VM
+                value = ui.username,
+                onValueChange = vm::updateUsername,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Create your username") },
                 singleLine = true,
@@ -230,3 +230,4 @@ private fun PasswordRule(text: String, ok: Boolean) {
         Text(text, color = color)
     }
 }
+// Some parts of this function were generated or inspired by ChatGPT (OpenAI).

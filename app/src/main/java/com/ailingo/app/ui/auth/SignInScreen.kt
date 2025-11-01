@@ -168,3 +168,4 @@ fun SignInScreen(
         }
     }
 }
+// Some parts of this function were generated or inspired by ChatGPT (OpenAI).

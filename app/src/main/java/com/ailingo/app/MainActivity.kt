@@ -2,7 +2,6 @@ package com.ailingo.app
 
 import android.os.Bundle
 import android.view.animation.OvershootInterpolator
-import android.window.SplashScreen
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Animatable
@@ -13,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,19 +24,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.ailingo.app.ui.components.BottomNavBar
-import com.ailingo.app.ui.theme.AILingoTheme
-import com.ailingo.app.ui.screens.HomeScreen
-import com.ailingo.app.ui.screens.LearnScreen
-import com.ailingo.app.ui.screens.StudioScreen
-import com.ailingo.app.ui.screens.ProfileScreen
 import com.ailingo.app.lesson.LessonOneScreen
 import com.ailingo.app.lesson.LessonTwoScreen
 import com.ailingo.app.ui.auth.SignInScreen
 import com.ailingo.app.ui.auth.SignUpScreen
+import com.ailingo.app.ui.auth.WelcomeScreen
+import com.ailingo.app.ui.components.BottomNavBar
+import com.ailingo.app.ui.screens.HomeScreen
+import com.ailingo.app.ui.screens.LearnScreen
+import com.ailingo.app.ui.screens.ProfileScreen
+import com.ailingo.app.ui.screens.StudioScreen
+import com.ailingo.app.ui.theme.AILingoTheme
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
-import com.ailingo.app.ui.auth.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +50,7 @@ class MainActivity : ComponentActivity() {
                     TabDest(Routes.Home,   "Home"),
                     TabDest(Routes.Learn,  "Learn"),
                     TabDest(Routes.Studio, "Studio"),
-                    TabDest(Routes.ProfileSplash,"Profile"),
+                    TabDest(Routes.ProfileSplash, "Profile"),
                 )
 
                 // Observe current route
@@ -66,9 +65,15 @@ class MainActivity : ComponentActivity() {
                             currentRoute == Routes.SignUp ||
                             currentRoute.startsWith("lesson/")
 
-                // Compute selected tab index (only matters when bar visible)
-                val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }
-                    .let { if (it >= 0) it else 0 }
+                // >>> FIX: keep highlight correct when on profile_splash or profilescreen
+                val selectedIndex = when {
+                    currentRoute == Routes.Home   -> 0
+                    currentRoute == Routes.Learn  -> 1
+                    currentRoute == Routes.Studio -> 2
+                    currentRoute == Routes.ProfileSplash || currentRoute == Routes.ProfileScreen -> 3
+                    else -> 0
+                }
+                // <<< FIX
 
                 Scaffold(
                     bottomBar = {
@@ -78,9 +83,6 @@ class MainActivity : ComponentActivity() {
                                 onTabSelected = { index ->
                                     val dest = tabs[index].route
                                     navController.navigate(dest) {
-                                        // Keep a single instance of each tab and restore state
-                                        // Using the graph's start destination might pop Splash off as well,
-                                        // but by this time we are already past auth.
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -100,14 +102,13 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.Splash) {
                             LaunchedEffect(Unit) {
                                 val isSignedIn = FirebaseAuth.getInstance().currentUser != null
-                                // CHANGED: go to Welcome if not signed in
                                 navController.navigate(if (isSignedIn) Routes.Home else Routes.Welcome) {
                                     popUpTo(Routes.Splash) { inclusive = true }
                                 }
                             }
                         }
 
-                        // NEW: Welcome page
+                        // Welcome
                         composable(Routes.Welcome) {
                             WelcomeScreen(
                                 onSignIn = { navController.navigate(Routes.SignIn) },
@@ -115,20 +116,18 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // --- Auth screens ---
+                        // Auth
                         composable(Routes.SignIn) {
                             SignInScreen(
                                 onSignedIn = {
                                     navController.navigate(Routes.Home) {
-                                        popUpTo(0)     // clear back stack
+                                        popUpTo(0)
                                         launchSingleTop = true
                                     }
                                 },
                                 onGoToSignUp = { navController.navigate(Routes.SignUp) }
                             )
                         }
-
-                        // Lesson detail routes (bottom bar hidden)
                         composable(Routes.SignUp) {
                             SignUpScreen(
                                 onSignedUp = {
@@ -141,24 +140,23 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // --- Top-level tabs (shown when authenticated) ---
+                        // Tabs
                         composable(Routes.Home)   { HomeScreen(navController) }
                         composable(Routes.Learn)  { LearnScreen(navController) }
                         composable(Routes.Studio) { StudioScreen() }
                         composable(Routes.ProfileSplash){ ProfileSplashScreen(navController = navController) }
-                        composable(Routes.ProfileScreen) { ProfileScreen() }
+                        composable(Routes.ProfileScreen) { ProfileScreen(navController = navController) }
 
-                        // --- Lessons (hide bottom bar) ---
+                        // Lessons
                         composable("lesson/1/1") {
                             LessonOneScreen(
                                 onLessonComplete = { navController.popBackStack() },
                                 onBackFromLesson = { navController.popBackStack() }
                             )
                         }
-
                         composable("lesson/1/2") {
                             LessonTwoScreen(
-                                onLessonComplete = { navController.popBackStack() }, // return to Learn tab
+                                onLessonComplete = { navController.popBackStack() },
                                 onBackFromLesson = { navController.popBackStack() }
                             )
                         }
@@ -171,7 +169,6 @@ class MainActivity : ComponentActivity() {
 
 data class TabDest(val route: String, val title: String)
 
-// Route constants used by MainActivity & tabs.
 private object Routes {
     const val Splash  = "splash"
     const val Welcome = "welcome"
@@ -199,9 +196,11 @@ fun ProfileSplashScreen(navController: NavController) {
             )
         )
         delay(3000L)
-        navController.navigate("ProfileScreen") {
-            popUpTo("ProfileSplash")
+        // >>> FIX: use route constants so names match
+        navController.navigate(Routes.ProfileScreen) {
+            popUpTo(Routes.ProfileSplash) { inclusive = true }
         }
+        // <<< FIX
     }
     Box(
         contentAlignment = Alignment.Center,
