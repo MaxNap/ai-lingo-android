@@ -8,13 +8,12 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -37,6 +36,8 @@ import com.ailingo.app.ui.screens.StudioScreen
 import com.ailingo.app.ui.theme.AILingoTheme
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
+import androidx.compose.ui.unit.dp
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +46,7 @@ class MainActivity : ComponentActivity() {
             AILingoTheme {
                 val navController = rememberNavController()
 
-                // Define bottom tabs once
+                // Bottom tabs
                 val tabs = listOf(
                     TabDest(Routes.Home,   "Home"),
                     TabDest(Routes.Learn,  "Learn"),
@@ -57,23 +58,23 @@ class MainActivity : ComponentActivity() {
                 val backStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = backStackEntry?.destination?.route ?: Routes.Splash
 
-                // Bottom bar should be hidden on Splash/Auth/Lessons
+                // Hide bottom bar on these routes
                 val hideBottomBar =
                     currentRoute == Routes.Splash ||
                             currentRoute == Routes.Welcome ||
+                            currentRoute == Routes.VerifyEmail ||
                             currentRoute == Routes.SignIn ||
                             currentRoute == Routes.SignUp ||
                             currentRoute.startsWith("lesson/")
 
-                // >>> FIX: keep highlight correct when on profile_splash or profilescreen
-                val selectedIndex = when {
-                    currentRoute == Routes.Home   -> 0
-                    currentRoute == Routes.Learn  -> 1
-                    currentRoute == Routes.Studio -> 2
-                    currentRoute == Routes.ProfileSplash || currentRoute == Routes.ProfileScreen -> 3
+                // Keep highlight correct for profile splash/profile screen
+                val selectedIndex = when (currentRoute) {
+                    Routes.Home   -> 0
+                    Routes.Learn  -> 1
+                    Routes.Studio -> 2
+                    Routes.ProfileSplash, Routes.ProfileScreen -> 3
                     else -> 0
                 }
-                // <<< FIX
 
                 Scaffold(
                     bottomBar = {
@@ -98,12 +99,26 @@ class MainActivity : ComponentActivity() {
                             .padding(inner)
                             .fillMaxSize()
                     ) {
-                        // --- Splash gate: decide start based on auth ---
+                        // Splash: decide where to go
                         composable(Routes.Splash) {
                             LaunchedEffect(Unit) {
-                                val isSignedIn = FirebaseAuth.getInstance().currentUser != null
-                                navController.navigate(if (isSignedIn) Routes.Home else Routes.Welcome) {
-                                    popUpTo(Routes.Splash) { inclusive = true }
+                                val user = FirebaseAuth.getInstance().currentUser
+                                when {
+                                    user == null -> {
+                                        navController.navigate(Routes.Welcome) {
+                                            popUpTo(Routes.Splash) { inclusive = true }
+                                        }
+                                    }
+                                    user.isEmailVerified -> {
+                                        navController.navigate(Routes.Home) {
+                                            popUpTo(Routes.Splash) { inclusive = true }
+                                        }
+                                    }
+                                    else -> {
+                                        navController.navigate(Routes.VerifyEmail) {
+                                            popUpTo(Routes.Splash) { inclusive = true }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -120,7 +135,10 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.SignIn) {
                             SignInScreen(
                                 onSignedIn = {
-                                    navController.navigate(Routes.Home) {
+                                    val user = FirebaseAuth.getInstance().currentUser
+                                    navController.navigate(
+                                        if (user?.isEmailVerified == true) Routes.Home else Routes.VerifyEmail
+                                    ) {
                                         popUpTo(0)
                                         launchSingleTop = true
                                     }
@@ -128,15 +146,35 @@ class MainActivity : ComponentActivity() {
                                 onGoToSignUp = { navController.navigate(Routes.SignUp) }
                             )
                         }
+
                         composable(Routes.SignUp) {
                             SignUpScreen(
                                 onSignedUp = {
-                                    navController.navigate(Routes.Home) {
+                                    // After sign-up we sent a verification email; now gate to Verify screen
+                                    navController.navigate(Routes.VerifyEmail) {
                                         popUpTo(0)
                                         launchSingleTop = true
                                     }
                                 },
                                 onGoToSignIn = { navController.popBackStack() }
+                            )
+                        }
+
+                        // Verify Email (lightweight screen here to avoid touching other files)
+                        composable(Routes.VerifyEmail) {
+                            VerifyEmailScreen(
+                                onContinueIfVerified = {
+                                    val user = FirebaseAuth.getInstance().currentUser
+                                    if (user?.isEmailVerified == true) {
+                                        navController.navigate(Routes.Home) {
+                                            popUpTo(0); launchSingleTop = true
+                                        }
+                                    }
+                                },
+                                onSignOut = {
+                                    FirebaseAuth.getInstance().signOut()
+                                    navController.navigate(Routes.Welcome) { popUpTo(0) }
+                                }
                             )
                         }
 
@@ -172,6 +210,7 @@ data class TabDest(val route: String, val title: String)
 private object Routes {
     const val Splash  = "splash"
     const val Welcome = "welcome"
+    const val VerifyEmail = "auth/verify"
     const val SignIn  = "auth/signin"
     const val SignUp  = "auth/signup"
     const val Home    = "home"
@@ -185,31 +224,111 @@ private object Routes {
 
 @Composable
 fun ProfileSplashScreen(navController: NavController) {
-    val scale = remember { Animatable(0f) }
-    val translationY = remember { Animatable(0f) }
-    LaunchedEffect(key1 = true) {
+    val scale = remember { Animatable(0.8f) }     // start slightly smaller
+    LaunchedEffect(Unit) {
         scale.animateTo(
-            targetValue = 0.3f,
+            targetValue = 1f,                    // full size
             animationSpec = tween(
                 durationMillis = 500,
                 easing = { OvershootInterpolator(2f).getInterpolation(it) }
             )
         )
-        delay(3000L)
-        // >>> FIX: use route constants so names match
+        delay(1200L)
         navController.navigate(Routes.ProfileScreen) {
             popUpTo(Routes.ProfileSplash) { inclusive = true }
         }
-        // <<< FIX
     }
+
     Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = R.drawable.ailingo_logo),
             contentDescription = "Logo",
-            modifier = Modifier.fillMaxSize(scale.value)
+            modifier = Modifier
+                .fillMaxWidth(0.5f)              // choose the baseline size (50% of width)
+                .scale(scale.value)              // apply the animation
         )
+    }
+}
+
+
+/* ---------- Lightweight Verify Email Screen ---------- */
+
+@Composable
+private fun VerifyEmailScreen(
+    onContinueIfVerified: () -> Unit,
+    onSignOut: () -> Unit
+) {
+    val auth = remember { FirebaseAuth.getInstance() }
+    var info by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(false) }
+
+    Scaffold { pad ->
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier
+                .padding(pad)
+                .padding(24.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "Verify your email",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(Modifier.padding(vertical = 8.dp))
+            Text(
+                "We’ve sent a verification link to ${auth.currentUser?.email ?: ""}. " +
+                        "Please verify, then tap Continue.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(Modifier.padding(vertical = 24.dp))
+
+            Button(
+                onClick = {
+                    loading = true
+                    // Resend email
+                    auth.currentUser?.sendEmailVerification()
+                        ?.addOnCompleteListener {
+                            loading = false
+                            info = if (it.isSuccessful) "Verification email sent." else
+                                (it.exception?.localizedMessage ?: "Failed to send email.")
+                        }
+                },
+                enabled = !loading
+            ) { Text("Resend email") }
+
+            Spacer(Modifier.padding(vertical = 12.dp))
+
+            Button(
+                onClick = {
+                    loading = true
+                    // Reload and check
+                    auth.currentUser?.reload()
+                        ?.addOnCompleteListener {
+                            loading = false
+                            onContinueIfVerified()
+                            if (auth.currentUser?.isEmailVerified != true) {
+                                info = "Not verified yet. Please check your inbox."
+                            }
+                        }
+                },
+                enabled = !loading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) { Text("I verified – Continue") }
+
+            Spacer(Modifier.padding(vertical = 12.dp))
+
+            TextButton(onClick = onSignOut, enabled = !loading) { Text("Sign out") }
+
+            if (info != null) {
+                Spacer(Modifier.padding(vertical = 8.dp))
+                Text(info!!, color = MaterialTheme.colorScheme.secondary)
+            }
+        }
     }
 }

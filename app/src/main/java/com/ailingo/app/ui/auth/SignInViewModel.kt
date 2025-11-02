@@ -35,12 +35,3 @@ class SignInViewModel(
         }
     }
 }
-
-internal fun mapAuthError(e: Exception): String =
-    when {
-        e.message?.contains("password is invalid", true) == true -> "Wrong password."
-        e.message?.contains("no user record", true) == true -> "User not found."
-        e.message?.contains("badly formatted", true) == true -> "Invalid email format."
-        e.message?.contains("network error", true) == true -> "Network error. Try again."
-        else -> "Sign in failed. ${e.message ?: ""}"
-    }
