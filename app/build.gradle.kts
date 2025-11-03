@@ -68,6 +68,11 @@ dependencies {
     // Foundation (provides KeyboardOptions)
     implementation("androidx.compose.foundation:foundation")
 
+    // Database
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
 
     // Testing - Unit Tests
     testImplementation(libs.junit)

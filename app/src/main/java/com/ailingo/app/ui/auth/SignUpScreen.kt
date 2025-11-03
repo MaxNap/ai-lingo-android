@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 private val Purple = Color(0xFFCB39C3)
 private val Blue = Color(0xFF1AB8E2)
+private val GreenOK = Color(0xFF2E7D32)
 
 @Composable
 fun SignUpScreen(
@@ -43,11 +44,28 @@ fun SignUpScreen(
     val hasLower = ui.password.any { it.isLowerCase() }
     val hasDigitOrSymbol = ui.password.any { it.isDigit() || !it.isLetterOrDigit() }
     val passwordsMatch = ui.password.isNotEmpty() && ui.password == confirm
-    val usernameValid = ui.username.trim().isNotEmpty()
 
+    // Username availability helper
+    val usernameText = ui.username.trim()
+    val usernameHelper = when (ui.usernameAvailable) {
+        null -> if (usernameText.length >= 3) "Checking…" else ""
+        true -> "✓ Username available"
+        false -> "✗ Username taken or invalid"
+    }
+    val usernameHelperColor = when (ui.usernameAvailable) {
+        true -> GreenOK
+        false -> MaterialTheme.colorScheme.error
+        null -> Color.Unspecified
+    }
+    val usernameIsError = usernameText.isNotEmpty() && (ui.usernameAvailable == false)
+
+    // Form validity (require usernameAvailable == true)
     val formValid =
-        usernameValid && emailValid && lengthOK && hasUpper && hasLower && hasDigitOrSymbol &&
-                passwordsMatch && !ui.isLoading
+        (ui.usernameAvailable == true) &&
+                emailValid &&
+                lengthOK && hasUpper && hasLower && hasDigitOrSymbol &&
+                passwordsMatch &&
+                !ui.isLoading
 
     Scaffold(
         topBar = {
@@ -77,11 +95,12 @@ fun SignUpScreen(
                 .padding(horizontal = 24.dp, vertical = 20.dp)
         ) {
 
+            // Username
             Text("Username", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = ui.username,
-                onValueChange = vm::updateUsername,
+                onValueChange = vm::updateUsername, // triggers debounced availability check in VM
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Create your username") },
                 singleLine = true,
@@ -90,7 +109,12 @@ fun SignUpScreen(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
                 ),
-                isError = ui.username.isNotBlank() && !usernameValid
+                isError = usernameIsError,
+                supportingText = {
+                    if (usernameHelper.isNotEmpty()) {
+                        Text(usernameHelper, color = usernameHelperColor)
+                    }
+                }
             )
 
             Spacer(Modifier.height(24.dp))
@@ -134,7 +158,13 @@ fun SignUpScreen(
                         Text(if (passVisible) "HIDE" else "SHOW")
                     }
                 },
-                isError = ui.password.isNotBlank() && !(lengthOK && hasUpper && hasLower && hasDigitOrSymbol)
+                isError = ui.password.isNotBlank() && !(lengthOK && hasUpper && hasLower && hasDigitOrSymbol),
+                supportingText = {
+                    Text(
+                        "8+ chars, upper, lower, number or symbol",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             )
 
             // Password rules
@@ -221,7 +251,7 @@ fun SignUpScreen(
 
 @Composable
 private fun PasswordRule(text: String, ok: Boolean) {
-    val color = if (ok) Color(0xFF2E7D32) else Color.Black
+    val color = if (ok) GreenOK else Color.Black
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
