@@ -1,5 +1,6 @@
 package com.ailingo.app.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -27,11 +28,24 @@ import androidx.navigation.compose.rememberNavController
 import com.ailingo.app.R
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.google.firebase.auth.EmailAuthProvider
 
 
 private val BrandBlue = Color(0xFF1AB8E2)
 private val BrandPurple = Color(0xFFCB39C3)
 private val LinkColor = Color(0xFFEDF4FF)
+
+private sealed class Section {
+    object EditPassword : Section()
+    object Notifications : Section()
+    object Settings : Section()
+    object Support : Section()
+    object PrivacyPolicy : Section()
+    object TermsOfService : Section()
+}
+
 
 @Composable
 fun ProfileScreen(
@@ -50,9 +64,122 @@ fun ProfileScreen(
     }
     val borderWidth = 4.dp
 
-    var showDialog by remember { mutableStateOf(false) }
-    if (showDialog) {
-        com.ailingo.app.ui.components.AlertDialog(onDismiss = { showDialog = false })
+    val context = LocalContext.current
+    var activeSection by remember { mutableStateOf<Section?>(null) }
+    var deleteAccount by remember { mutableStateOf("") }
+
+    activeSection?.let { section ->
+        com.ailingo.app.ui.components.AlertDialog(
+            title = when (section) {
+                Section.EditPassword -> "Edit Password"
+                Section.Notifications -> "Notifications"
+                Section.Settings -> "Settings"
+                Section.Support -> "Support"
+                Section.PrivacyPolicy -> "Privacy Policy"
+                Section.TermsOfService -> "Terms of Service"
+            },
+            body = {
+                when (section) {
+                    /* Account Section */
+                    /* --------------- */
+                    Section.EditPassword -> Text("Enter a new password or follow instructions to change it.")
+                    // ↑ Text: input x3 (old, new, new), confirm → Change password
+                    // * Very complex setup —will need more time to implement
+                    Section.Notifications -> Text("Manage your notification preferences.")
+                    // ↑ Radio: daily notification (on/off), confirm → Save preference + turn on/off notifications
+                    // * Requires a number of background functionality to be implemented — Saved for later... (includes time picker and data storage)
+                    Section.Settings -> {
+                        var password by remember { mutableStateOf("") }
+                        Column {
+                            Text("Confirm Password to delete your account")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = deleteAccount,
+                                onValueChange = { deleteAccount = it },
+                                label = { Text("Password") },
+                                visualTransformation = PasswordVisualTransformation(),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                    // ↑ Delete Account: Button → Warning → Confirmation → Password input → Delete account
+                    //
+                    Section.Support -> Text("Contact support or view FAQs.")
+                    // ↑ Link: Support Email
+
+                    /* About Section */
+                    /* ------------- */
+                    Section.PrivacyPolicy -> Text("View our privacy policy.")
+                    // ↑ Link: Privacy Policy
+                    Section.TermsOfService -> Text("Read the terms of service.")
+                    // ↑ Link: Terms of Service
+                }
+            },
+            confirmText = when (section) {
+                Section.EditPassword -> "Confirm Change"
+
+                Section.Notifications -> "Save Preference"
+
+                Section.Settings -> "Delete Account"
+
+                Section.Support -> "support@ailingo.com"
+
+                Section.PrivacyPolicy -> "Privacy Policy"
+
+                Section.TermsOfService -> "Terms of Service"
+
+            },
+            dismissText = "Cancel",
+            onConfirm = {
+                // perform section-specific action
+                when (section) {
+                    Section.EditPassword -> {
+                        // ↑ Verify correct input → Confirm Password Change
+                    }
+                    Section.Notifications -> {
+                        // ↑ Save Notification Preference
+                    }
+                    Section.Settings -> {
+                        val user = FirebaseAuth.getInstance().currentUser
+                        val email = user?.email
+
+                        if (user != null && email != null && deleteAccount.isNotBlank()) {
+                            val credential = EmailAuthProvider.getCredential(email, deleteAccount)
+
+                            user.reauthenticate(credential).addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    user.delete().addOnCompleteListener { deleteTask ->
+                                        if (deleteTask.isSuccessful) {
+                                            FirebaseAuth.getInstance().signOut()
+                                            Toast.makeText(context, "Account deleted successfully", Toast.LENGTH_SHORT).show()
+
+                                        } else {
+                                            Toast.makeText(context, "Failed to delete account. Please try again.", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Authentication failed. Please check your password.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, "Password cannot be empty.", Toast.LENGTH_SHORT).show()
+                        }
+                        // ↑ Verify correct input → Delete Account → Return to home page
+                    }
+                    Section.Support -> {
+                        // ↑ Link: Support Email (placeholder email)
+                    }
+                    Section.PrivacyPolicy -> {
+                        // ↑ Link: [https://www.freeprivacypolicy.com/live/13e82723-8e50-48f0-b47f-ee2c4e06e633]
+                    }
+                    Section.TermsOfService -> {
+                        // ↑ Link: *Costs money —so it is not created yet.
+                    }
+                }
+                activeSection = null
+            },
+            onDismiss = { activeSection = null }
+        )
     }
 
     Column(
@@ -94,18 +221,18 @@ fun ProfileScreen(
 
         // --- Account Section ---
         ProfileSection(title = "Account") {
-            ProfileButton(text = "Edit Password", onClick = { showDialog = true })
-            ProfileButton(text = "Notifications", onClick = { showDialog = true })
-            ProfileButton(text = "Settings", onClick = { showDialog = true })
-            ProfileButton(text = "Support", onClick = { showDialog = true })
+            ProfileButton(text = "Edit Password", onClick = { activeSection = Section.EditPassword })
+            ProfileButton(text = "Notifications", onClick = { activeSection = Section.Notifications })
+            ProfileButton(text = "Settings", onClick = { activeSection = Section.Settings })
+            ProfileButton(text = "Support", onClick = { activeSection = Section.Support })
         }
 
         Spacer(modifier = Modifier.height(30.dp))
 
         // --- About Section ---
         ProfileSection(title = "About") {
-            ProfileButton(text = "Privacy Policy", onClick = { showDialog = true })
-            ProfileButton(text = "Terms of Service", onClick = { showDialog = true })
+            ProfileButton(text = "Privacy Policy", onClick = { activeSection = Section.PrivacyPolicy })
+            ProfileButton(text = "Terms of Service", onClick = { activeSection = Section.TermsOfService })
         }
 
         Spacer(modifier = Modifier.height(40.dp))
