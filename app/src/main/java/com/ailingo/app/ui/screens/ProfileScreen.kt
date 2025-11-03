@@ -152,7 +152,9 @@ fun ProfileScreen(
                                         if (deleteTask.isSuccessful) {
                                             FirebaseAuth.getInstance().signOut()
                                             Toast.makeText(context, "Account deleted successfully", Toast.LENGTH_SHORT).show()
-
+                                            navController.navigate("welcome") {
+                                                popUpTo(0) // clear backstack
+                                            }
                                         } else {
                                             Toast.makeText(context, "Failed to delete account. Please try again.", Toast.LENGTH_SHORT).show()
                                         }
