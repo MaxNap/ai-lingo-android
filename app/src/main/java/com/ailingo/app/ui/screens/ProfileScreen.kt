@@ -1,5 +1,6 @@
 package com.ailingo.app.ui.screens
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -28,9 +29,14 @@ import androidx.navigation.compose.rememberNavController
 import com.ailingo.app.R
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.google.firebase.auth.EmailAuthProvider
+import android.net.Uri
 
 
 private val BrandBlue = Color(0xFF1AB8E2)
@@ -53,6 +59,8 @@ fun ProfileScreen(
     userName: String = "Your Name",
     userEmail: String = "your.email@example.com"
 ) {
+    val user = FirebaseAuth.getInstance().currentUser
+
     val gradientBrush = remember {
         Brush.sweepGradient(
             listOf(
@@ -65,6 +73,7 @@ fun ProfileScreen(
     val borderWidth = 4.dp
 
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var activeSection by remember { mutableStateOf<Section?>(null) }
     var deleteAccount by remember { mutableStateOf("") }
 
@@ -169,9 +178,15 @@ fun ProfileScreen(
                         // ↑ Verify correct input → Delete Account → Return to home page
                     }
                     Section.Support -> {
+                        val supportEmail = "support@ailingo.com"
+                        clipboardManager.setText(AnnotatedString(supportEmail))
+                        Toast.makeText(context, "Email copied to clipboard", Toast.LENGTH_SHORT).show()
                         // ↑ Link: Support Email (placeholder email)
                     }
                     Section.PrivacyPolicy -> {
+                        val privacyPolicyUrl = "https://www.freeprivacypolicy.com/live/13e82723-8e50-48f0-b47f-ee2c4e06e633"
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyUrl))
+                        context.startActivity(intent)
                         // ↑ Link: [https://www.freeprivacypolicy.com/live/13e82723-8e50-48f0-b47f-ee2c4e06e633]
                     }
                     Section.TermsOfService -> {
@@ -209,13 +224,13 @@ fun ProfileScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = userName,
+            text = user?.displayName ?: userName,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = userEmail,
+            text = user?.email ?: userEmail,
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Gray
         )
