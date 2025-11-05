@@ -1,32 +1,28 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
+import * as admin from "firebase-admin";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { onCall } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+admin.initializeApp();
+const db = admin.firestore();
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+// Triggered when a progress doc changes to completed
+export const onProgressWrite = onDocumentWritten(
+  { document: "users/{uid}/progress/{docId}", region: "us-central1" },
+  async (event) => {
+    const uid = event.params.uid as string;
+    const after = event.data?.after?.data();
+    if (!after || after.status !== "completed") return;
+    logger.info(`Lesson completed by ${uid}`);
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    // Example: set a timestamp if missing (idempotent)
+    const userRef = db.doc(`users/${uid}`);
+    await userRef.set({ lastActiveDate: new Date().toISOString().slice(0,10) }, { merge: true });
+  }
+);
+
+// Callable example (test from app)
+export const ping = onCall({ region: "us-central1" }, async (req) => {
+  if (!req.auth?.uid) throw new Error("Unauthenticated");
+  return { ok: true, uid: req.auth.uid };
+});
