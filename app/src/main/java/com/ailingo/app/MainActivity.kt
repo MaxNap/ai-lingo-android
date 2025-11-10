@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     TabDest(Routes.Home,   "Home"),
                     TabDest(Routes.Learn,  "Learn"),
                     TabDest(Routes.Studio, "Studio"),
-                    TabDest(Routes.ProfileSplash, "Profile"),
+                    TabDest(Routes.ProfileScreen, "Profile"),
                 )
 
                 // Observe current route
@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
                             currentRoute == Routes.VerifyEmail ||
                             currentRoute == Routes.SignIn ||
                             currentRoute == Routes.SignUp ||
+                            currentRoute == Routes.ProfileSplash ||
                             currentRoute.startsWith("lesson/")
 
                 // Keep highlight correct for profile splash/profile screen
@@ -72,7 +73,7 @@ class MainActivity : ComponentActivity() {
                     Routes.Home   -> 0
                     Routes.Learn  -> 1
                     Routes.Studio -> 2
-                    Routes.ProfileSplash, Routes.ProfileScreen -> 3
+                    Routes.ProfileScreen -> 3
                     else -> 0
                 }
 
@@ -137,7 +138,7 @@ class MainActivity : ComponentActivity() {
                                 onSignedIn = {
                                     val user = FirebaseAuth.getInstance().currentUser
                                     navController.navigate(
-                                        if (user?.isEmailVerified == true) Routes.Home else Routes.VerifyEmail
+                                        if (user?.isEmailVerified == true) Routes.ProfileSplash else Routes.VerifyEmail
                                     ) {
                                         popUpTo(0)
                                         launchSingleTop = true
@@ -166,7 +167,7 @@ class MainActivity : ComponentActivity() {
                                 onContinueIfVerified = {
                                     val user = FirebaseAuth.getInstance().currentUser
                                     if (user?.isEmailVerified == true) {
-                                        navController.navigate(Routes.Home) {
+                                        navController.navigate(Routes.ProfileSplash) {
                                             popUpTo(0); launchSingleTop = true
                                         }
                                     }
@@ -234,7 +235,7 @@ fun ProfileSplashScreen(navController: NavController) {
             )
         )
         delay(1200L)
-        navController.navigate(Routes.ProfileScreen) {
+        navController.navigate(Routes.Home) {
             popUpTo(Routes.ProfileSplash) { inclusive = true }
         }
     }
