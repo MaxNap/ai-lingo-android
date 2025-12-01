@@ -11,10 +11,11 @@ import com.ailingo.app.ui.auth.SignInScreen
 import com.ailingo.app.ui.auth.SignUpScreen
 import com.ailingo.app.ui.auth.WelcomeScreen
 import com.ailingo.app.ui.screens.HomeScreen
-import com.ailingo.app.ui.screens.LearnScreen
+import com.ailingo.app.ui.screens.LearnScreen1
 import com.ailingo.app.ui.screens.LessonOverviewScreen
 import com.google.firebase.auth.FirebaseAuth
 import com.ailingo.app.lesson.LessonOneScreen
+import com.ailingo.app.ui.screens.LearnScreen
 
 @Composable
 fun AppNavHost(
@@ -65,7 +66,7 @@ fun AppNavHost(
 
         // --- Learn list ---
         composable(Routes.Learn) {
-            LearnScreen(navController = nav)
+            LearnScreen1(navController = nav)
         }
 
         // --- Lesson Overview ---

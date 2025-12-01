@@ -30,13 +30,14 @@ import com.ailingo.app.ui.auth.SignUpScreen
 import com.ailingo.app.ui.auth.WelcomeScreen
 import com.ailingo.app.ui.components.BottomNavBar
 import com.ailingo.app.ui.screens.HomeScreen
-import com.ailingo.app.ui.screens.LearnScreen
+import com.ailingo.app.ui.screens.LearnScreen1
 import com.ailingo.app.ui.screens.ProfileScreen
 import com.ailingo.app.ui.screens.StudioScreen
 import com.ailingo.app.ui.theme.AILingoTheme
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import androidx.compose.ui.unit.dp
+import com.ailingo.app.ui.screens.LearnScreen
 
 
 class MainActivity : ComponentActivity() {
@@ -181,7 +182,7 @@ class MainActivity : ComponentActivity() {
 
                         // Tabs
                         composable(Routes.Home)   { HomeScreen(navController) }
-                        composable(Routes.Learn)  { LearnScreen(navController) }
+                        composable(Routes.Learn)  { LearnScreen1(navController) }
                         composable(Routes.Studio) { StudioScreen() }
                         composable(Routes.ProfileSplash){ ProfileSplashScreen(navController = navController) }
                         composable(Routes.ProfileScreen) { ProfileScreen(navController = navController) }

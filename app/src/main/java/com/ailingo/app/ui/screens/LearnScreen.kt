@@ -16,7 +16,7 @@ import androidx.navigation.NavController
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.ailingo.app.ui.navigation.Routes
 
-private data class LearnItem(
+private data class LearnItem2(
     val id: String,            // e.g. "1"
     val title: String,         // e.g. "Getting Started"
     val tag: String = "Basics",
@@ -24,10 +24,10 @@ private data class LearnItem(
 )
 
 private val learnItems = listOf(
-    LearnItem(id = "1", title = "Getting Started"),
-    LearnItem(id = "2", title = "Clear & Specific Prompts"),
-    LearnItem(id = "3", title = "Asking Simple Questions"),
-    LearnItem(id = "4", title = "Short Answers Practice")
+    LearnItem2(id = "1", title = "Getting Started"),
+    LearnItem2(id = "2", title = "Clear & Specific Prompts"),
+    LearnItem2(id = "3", title = "Asking Simple Questions"),
+    LearnItem2(id = "4", title = "Short Answers Practice")
 )
 
 @Composable
