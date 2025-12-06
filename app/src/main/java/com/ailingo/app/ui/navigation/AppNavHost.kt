@@ -11,11 +11,12 @@ import com.ailingo.app.ui.auth.SignInScreen
 import com.ailingo.app.ui.auth.SignUpScreen
 import com.ailingo.app.ui.auth.WelcomeScreen
 import com.ailingo.app.ui.screens.HomeScreen
-import com.ailingo.app.ui.screens.LearnScreen1
 import com.ailingo.app.ui.screens.LessonOverviewScreen
 import com.google.firebase.auth.FirebaseAuth
 import com.ailingo.app.lesson.LessonOneScreen
 import com.ailingo.app.ui.screens.LearnScreen
+
+
 
 @Composable
 fun AppNavHost(
@@ -66,26 +67,37 @@ fun AppNavHost(
 
         // --- Learn list ---
         composable(Routes.Learn) {
-            LearnScreen1(navController = nav)
+            LearnScreen(navController = nav)
         }
 
-        // --- Lesson Overview ---
-        // Navigate with: nav.navigate("${Routes.LessonOverview}/1")
-        composable("${Routes.LessonOverview}/{lessonId}") { backStackEntry ->
-            val lessonId = backStackEntry.arguments?.getString("lessonId") ?: "1"
+
+        // --- Lesson Overview (unit screen) ---
+        // Navigate with: nav.navigate(Routes.lessonOverview("1"))
+        composable("${Routes.LessonOverviewBase}/{unitId}") { backStackEntry ->
+            val unitId = backStackEntry.arguments?.getString("unitId") ?: "1"
             LessonOverviewScreen(
                 navController = nav,
-                lessonId = lessonId
+                lessonId = unitId
             )
         }
 
-        // --- Lesson content (Lesson 1) ---
-        // Navigate with: nav.navigate(Routes.Lesson1)
-        composable(Routes.Lesson1) {
-            LessonOneScreen(
-                onLessonComplete = { nav.popBackStack() },
-                onBackFromLesson = { nav.popBackStack() }
-            )
+
+
+        // --- Lesson content ---
+        // Navigate with: nav.navigate(Routes.lesson("1", "1"))
+        composable("lesson/{unitId}/{lessonId}") { backStackEntry ->
+            val unitId = backStackEntry.arguments?.getString("unitId") ?: "1"
+            val lessonId = backStackEntry.arguments?.getString("lessonId") ?: "1"
+
+            when (lessonId) {
+                "1" -> LessonOneScreen(
+                    onLessonComplete = { nav.popBackStack() },
+                    onBackFromLesson = { nav.popBackStack() }
+                )
+                // later:
+                // "2" -> LessonTwoScreen(...)
+            }
         }
+
     }
 }

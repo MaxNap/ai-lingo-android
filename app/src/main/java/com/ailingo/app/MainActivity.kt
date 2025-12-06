@@ -189,27 +189,38 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.ProfileSplash){ ProfileSplashScreen(navController = navController) }
                         composable(Routes.ProfileScreen) { ProfileScreen(navController = navController) }
 
-                        // Overview for Course 1
-                        composable("lesson/overview/1") {
+                        // Overview for a unit (currently unit 1)
+                        composable(
+                            route = "${com.ailingo.app.ui.navigation.Routes.LessonOverviewBase}/{unitId}"
+                        ) { backStackEntry ->
+                            val unitId = backStackEntry.arguments?.getString("unitId") ?: "1"
+
                             LessonOverviewScreen(
                                 navController = navController,
-                                lessonId = "1"
+                                lessonId = unitId
                             )
                         }
 
-                        // Lessons
-                        composable("lesson/1/1") {
-                            LessonOneScreen(
-                                onLessonComplete = { navController.popBackStack() },
-                                onBackFromLesson = { navController.popBackStack() }
-                            )
+                        // Lessons (dynamic: lesson/{unitId}/{lessonId})
+                        composable(
+                            route = "lesson/{unitId}/{lessonId}"
+                        ) { backStackEntry ->
+                            val unitId = backStackEntry.arguments?.getString("unitId") ?: "1"
+                            val lessonId = backStackEntry.arguments?.getString("lessonId") ?: "1"
+
+                            when (lessonId) {
+                                "1" -> LessonOneScreen(
+                                    onLessonComplete = { navController.popBackStack() },
+                                    onBackFromLesson = { navController.popBackStack() }
+                                )
+                                "2" -> LessonTwoScreen(
+                                    onLessonComplete = { navController.popBackStack() },
+                                    onBackFromLesson = { navController.popBackStack() }
+                                )
+                                // later: add "3", "4" here when lessons exist
+                            }
                         }
-                        composable("lesson/1/2") {
-                            LessonTwoScreen(
-                                onLessonComplete = { navController.popBackStack() },
-                                onBackFromLesson = { navController.popBackStack() }
-                            )
-                        }
+
                     }
                 }
             }
