@@ -19,23 +19,18 @@ import com.ailingo.app.ui.navigation.Routes
 import com.ailingo.app.lesson.data.ProgressRepository
 import kotlinx.coroutines.flow.collectLatest
 
-<<<<<<< Updated upstream
-private data class LearnItem2(
-    val id: String,            // e.g. "1"
-=======
-private data class LearnItem(
+private data class LearnListItem(
     val id: String,            // "1", "2", ...
->>>>>>> Stashed changes
     val title: String,         // e.g. "Getting Started"
     val tag: String = "Basics",
     val subtitle: String = "Learn the fundamentals of AI prompting"
 )
 
 private val learnItems = listOf(
-    LearnItem2(id = "1", title = "Getting Started"),
-    LearnItem2(id = "2", title = "Clear & Specific Prompts"),
-    LearnItem2(id = "3", title = "Asking Simple Questions"),
-    LearnItem2(id = "4", title = "Short Answers Practice")
+    LearnListItem(id = "1", title = "Getting Started"),
+    LearnListItem(id = "2", title = "Clear & Specific Prompts"),
+    LearnListItem(id = "3", title = "Asking Simple Questions"),
+    LearnListItem(id = "4", title = "Short Answers Practice")
 )
 
 @Composable
@@ -80,7 +75,7 @@ fun LearnScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(learnItems) { item ->
-                    val lessonKey = "lesson${item.id}"                  // "1" -> "lesson1"
+                    val lessonKey = "lesson${item.id}"          // "1" -> "lesson1"
                     val isCompleted = done[lessonKey] == true
 
                     LessonCard(
@@ -91,7 +86,7 @@ fun LearnScreen(navController: NavController) {
                         onClick = {
                             // Navigate based on lesson ID
                             when (item.id) {
-                                "1" -> navController.navigate(Routes.Lesson1)             // open Lesson 1
+                                "1" -> navController.navigate(Routes.Lesson1) // open Lesson 1
                                 else -> navController.navigate(Routes.lessonOverview(item.id))
                             }
                         }

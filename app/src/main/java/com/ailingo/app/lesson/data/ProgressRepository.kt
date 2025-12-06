@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
-class ProgressRepository(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+class ProgressRepository {
+
+    // Make these clear class properties so there's no confusion
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-) {
+
     /** Emits lessonId -> completed for the given courseId. */
     fun progressMapForCourse(courseId: String): Flow<Map<String, Boolean>> = callbackFlow {
         val uid = auth.currentUser?.uid
@@ -23,7 +25,9 @@ class ProgressRepository(
             return@callbackFlow
         }
 
-        val col = db.collection("users").document(uid).collection("progress")
+        val col = db.collection("users")
+            .document(uid)
+            .collection("progress")
 
         val reg: ListenerRegistration = col.addSnapshotListener { qs, err ->
             if (err != null) {
@@ -36,7 +40,9 @@ class ProgressRepository(
             qs?.documents?.forEach { d ->
                 if (d.id.startsWith("${courseId}_")) {
                     val id = d.id.removePrefix("${courseId}_")
-                    val done = (d.getString("status") == "completed") || (d.getBoolean("finalized") == true)
+                    val done =
+                        (d.getString("status") == "completed") ||
+                                (d.getBoolean("finalized") == true)
                     map[id] = done
                 }
             }
@@ -50,10 +56,16 @@ class ProgressRepository(
      * Mark as completed (idempotent).
      * Uses await() so callers can safely show/hide loading states.
      */
-    suspend fun markLessonCompleted(courseId: String, lessonId: String, xpReward: Int = 10) {
+    suspend fun markLessonCompleted(
+        courseId: String,
+        lessonId: String,
+        xpReward: Int = 10
+    ) {
         val uid = auth.currentUser?.uid ?: return
-        val ref = db.collection("users").document(uid)
-            .collection("progress").document("${courseId}_$lessonId")
+        val ref = db.collection("users")
+            .document(uid)
+            .collection("progress")
+            .document("${courseId}_$lessonId")
 
         val data = mapOf(
             "status" to "completed",
