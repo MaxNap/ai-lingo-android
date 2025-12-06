@@ -1,5 +1,4 @@
-
-
+// functions/src/index.ts
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import dayjs from "dayjs";
@@ -7,13 +6,18 @@ import dayjs from "dayjs";
 admin.initializeApp();
 const db = admin.firestore();
 
-
+/** --- CONFIG --- */
 const REGION = "us-central1";
 const LESSON_DEFAULT_XP = 10;
 const STREAK_BADGES = [3, 7, 30];
 const TODAY = () => dayjs().format("YYYY-MM-DD");
 
-
+/**
+ * Firestore trigger:
+ * Runs whenever a user progress doc is written at users/{uid}/progress/{docId}
+ * Awards XP exactly once per lesson, updates streak + lastActiveDate,
+ * and creates achievement docs at thresholds.
+ */
 export const onProgressWrite = functions
   .region(REGION)
   .firestore
@@ -23,20 +27,12 @@ export const onProgressWrite = functions
     const after = change.after.exists ? change.after.data() : null;
     if (!after) return;
 
-
+    // Only act when lesson is completed
     if (after.status !== "completed") return;
 
     const progressRef = db.doc(`users/${uid}/progress/${context.params.docId}`);
     const userRef = db.doc(`users/${uid}`);
 
-<<<<<<< Updated upstream
-// Callable example (test from app)
-export const ping = onCall({ region: "us-central1" }, async (req) => {
-  if (!req.auth?.uid) throw new Error("Unauthenticated");
-  return { ok: true, uid: req.auth.uid };
-});
-//test
-=======
     await db.runTransaction(async (tx) => {
       const [progressSnap, userSnap] = await Promise.all([
         tx.get(progressRef),
@@ -46,7 +42,7 @@ export const ping = onCall({ region: "us-central1" }, async (req) => {
       const progress = progressSnap.data() || {};
       const user = userSnap.data() || {};
 
-
+      // Idempotency: if this lesson already finalized, exit
       if (progress.finalized === true) {
         functions.logger.info(
           `Lesson already finalized for uid=${uid}, doc=${progressRef.id}`
@@ -54,11 +50,11 @@ export const ping = onCall({ region: "us-central1" }, async (req) => {
         return;
       }
 
-
+      // Determine XP to award
       const xpAward =
         Number(progress.xpEarned ?? after.xpEarned ?? after.xpReward ?? LESSON_DEFAULT_XP) || 0;
 
-
+      // --- Update user totals & streak ---
       const today = TODAY();
       const last = (user.lastActiveDate as string | undefined) || "";
       let streak = Number(user.streak || 0);
@@ -68,14 +64,15 @@ export const ping = onCall({ region: "us-central1" }, async (req) => {
       } else {
         const diff = dayjs(today).diff(dayjs(last), "day");
         if (diff === 0) {
+          // same day → keep streak
         } else if (diff === 1) {
           streak += 1;
         } else {
-          streak = 1;
+          streak = 1; // streak broken
         }
       }
 
-
+      // Update user doc
       tx.set(
         userRef,
         {
@@ -88,7 +85,7 @@ export const ping = onCall({ region: "us-central1" }, async (req) => {
         { merge: true }
       );
 
-
+      // Mark progress as finalized
       tx.set(
         progressRef,
         {
@@ -101,7 +98,7 @@ export const ping = onCall({ region: "us-central1" }, async (req) => {
         { merge: true }
       );
 
-
+      // Award streak achievements
       if (STREAK_BADGES.includes(streak)) {
         const code = `STREAK_${streak}`;
         const achRef = db.doc(`users/${uid}/achievements/${code}`);
@@ -123,7 +120,9 @@ export const ping = onCall({ region: "us-central1" }, async (req) => {
     );
   });
 
-
+/**
+ * Simple callable to test wiring from the app.
+ */
 export const ping = functions
   .region(REGION)
   .https.onCall(async (_data, context) => {
@@ -135,4 +134,3 @@ export const ping = functions
     }
     return { ok: true, uid: context.auth.uid };
   });
->>>>>>> Stashed changes
