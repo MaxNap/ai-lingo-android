@@ -29,7 +29,6 @@ android {
 
     buildFeatures { compose = true }
 
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -42,13 +41,13 @@ android {
 }
 
 dependencies {
-    // Core Android KTX
+    // --- Core Android ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose) // Activity Compose integration
+    implementation(libs.androidx.activity.compose)
 
-    // Jetpack Compose UI
-    implementation(platform(libs.androidx.compose.bom))
+    // --- Jetpack Compose ---
+    implementation(platform(libs.androidx.compose.bom))    // keep your version-catalog BOM
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
@@ -56,34 +55,30 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.navigation.compose)
 
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
+    // (You also had this alias; keeping it in case other modules use it)
     implementation(libs.navigation.compose)
-    // Compose BOM if you use it
-    implementation(platform("androidx.compose:compose-bom:2024.09.01"))
 
-    // Material 3
-    implementation("androidx.compose.material3:material3")
-
-    // Foundation (provides KeyboardOptions)
+    // Optional: Foundation (KeyboardOptions, etc.)
     implementation("androidx.compose.foundation:foundation")
 
-    // Database
-    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    // --- Firebase (use ONE BOM + all needed SDKs) ---
+    // Use a single, recent BOM to unify versions across auth/firestore/functions
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")   // ← fixes FirebaseFunctions import
+    implementation("com.google.firebase:firebase-common-ktx")      // helpful KTX extensions
 
-
-    // Testing - Unit Tests
+    // --- Tests ---
     testImplementation(libs.junit)
 
-    // Testing - Android Instrumented Tests
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom)) // BOM for testing libraries
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4) // Compose UI testing
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
-    // Debugging - Tooling for development builds
-    debugImplementation(libs.androidx.compose.ui.tooling) // Full tooling for debug
-    debugImplementation(libs.androidx.compose.ui.test.manifest) // Test manifest for debug
+    // --- Debug tools ---
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

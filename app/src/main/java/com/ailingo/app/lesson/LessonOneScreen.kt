@@ -55,11 +55,20 @@ fun LessonOneScreen(
         },
         onNext = {
             if (vm.index == vm.lesson.activities.lastIndex) {
+                // Ensure progress is synced before leaving the lesson
+                vm.forceSyncCompletion()
                 onLessonComplete()
             } else {
                 vm.onNext()
             }
-        }
+        },
+        // New (optional) finish button — appears only when whole lesson is complete
+        onFinishLesson = {
+            vm.forceSyncCompletion()
+            onLessonComplete()
+        },
+        isLessonCompleted = vm.isLessonCompleted,
+        syncing = vm.syncing
     ) {
         when (act) {
             is IntroActivity -> {

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,19 +31,20 @@ import com.ailingo.app.ui.auth.SignUpScreen
 import com.ailingo.app.ui.auth.WelcomeScreen
 import com.ailingo.app.ui.components.BottomNavBar
 import com.ailingo.app.ui.screens.HomeScreen
-import com.ailingo.app.ui.screens.LearnScreen1
+import com.ailingo.app.ui.screens.LearnScreen
 import com.ailingo.app.ui.screens.ProfileScreen
 import com.ailingo.app.ui.screens.StudioScreen
+import com.ailingo.app.ui.screens.LessonOverviewScreen
 import com.ailingo.app.ui.theme.AILingoTheme
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
-import androidx.compose.ui.unit.dp
-import com.ailingo.app.ui.screens.LearnScreen
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ✅ No emulator setup here anymore – app talks to real Firebase project
+
         setContent {
             AILingoTheme {
                 val navController = rememberNavController()
@@ -162,7 +164,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // Verify Email (lightweight screen here to avoid touching other files)
+                        // Verify Email
                         composable(Routes.VerifyEmail) {
                             VerifyEmailScreen(
                                 onContinueIfVerified = {
@@ -182,10 +184,18 @@ class MainActivity : ComponentActivity() {
 
                         // Tabs
                         composable(Routes.Home)   { HomeScreen(navController) }
-                        composable(Routes.Learn)  { LearnScreen1(navController) }
+                        composable(Routes.Learn)  { LearnScreen(navController) }
                         composable(Routes.Studio) { StudioScreen() }
                         composable(Routes.ProfileSplash){ ProfileSplashScreen(navController = navController) }
                         composable(Routes.ProfileScreen) { ProfileScreen(navController = navController) }
+
+                        // Overview for Course 1
+                        composable("lesson/overview/1") {
+                            LessonOverviewScreen(
+                                navController = navController,
+                                lessonId = "1"
+                            )
+                        }
 
                         // Lessons
                         composable("lesson/1/1") {
@@ -249,12 +259,11 @@ fun ProfileSplashScreen(navController: NavController) {
             painter = painterResource(id = R.drawable.ailingo_logo),
             contentDescription = "Logo",
             modifier = Modifier
-                .fillMaxWidth(0.5f)              // choose the baseline size (50% of width)
+                .fillMaxWidth(0.5f)              // baseline size (50% width)
                 .scale(scale.value)              // apply the animation
         )
     }
 }
-
 
 /* ---------- Lightweight Verify Email Screen ---------- */
 
@@ -282,7 +291,7 @@ private fun VerifyEmailScreen(
             Spacer(Modifier.padding(vertical = 8.dp))
             Text(
                 "We’ve sent a verification link to ${auth.currentUser?.email ?: ""}. " +
-                        "Please verify, then tap Continue.",
+                        "Open the link in your email, then tap the button below.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -291,12 +300,14 @@ private fun VerifyEmailScreen(
             Button(
                 onClick = {
                     loading = true
-                    // Resend email
                     auth.currentUser?.sendEmailVerification()
                         ?.addOnCompleteListener {
                             loading = false
-                            info = if (it.isSuccessful) "Verification email sent." else
-                                (it.exception?.localizedMessage ?: "Failed to send email.")
+                            info = if (it.isSuccessful) {
+                                "Verification email sent. Please check your inbox."
+                            } else {
+                                it.exception?.localizedMessage ?: "Failed to send email."
+                            }
                         }
                 },
                 enabled = !loading
@@ -307,13 +318,12 @@ private fun VerifyEmailScreen(
             Button(
                 onClick = {
                     loading = true
-                    // Reload and check
                     auth.currentUser?.reload()
                         ?.addOnCompleteListener {
                             loading = false
                             onContinueIfVerified()
                             if (auth.currentUser?.isEmailVerified != true) {
-                                info = "Not verified yet. Please check your inbox."
+                                info = "Not verified yet. Please open the link and try again."
                             }
                         }
                 },
