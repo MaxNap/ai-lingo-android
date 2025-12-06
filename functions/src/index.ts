@@ -26,3 +26,4 @@ export const ping = onCall({ region: "us-central1" }, async (req) => {
   if (!req.auth?.uid) throw new Error("Unauthenticated");
   return { ok: true, uid: req.auth.uid };
 });
+//test
