@@ -7,6 +7,7 @@ import com.ailingo.app.lesson.viewmodel.LessonViewModel
 import com.ailingo.app.lesson.model.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.LaunchedEffect
+import com.ailingo.app.lesson.ui.activities.MultipleChoiceCard
 import kotlinx.coroutines.delay
 
 @Composable
@@ -78,28 +79,36 @@ fun LessonOneScreen(
             }
 
             is McqActivity -> {
-                com.ailingo.app.lesson.ui.activities.MultipleChoiceCard(
+                MultipleChoiceCard(
                     act = act,
                     onSelect = { opt -> vm.onSelectMcq(opt, act) },
-                    feedback = vm.feedback
+                    feedback = vm.feedback,
+                    selectedOptionText = vm.selectedMcqText   // <- NEW
                 )
-                // Optional auto-advance after correct MCQ
+
+                // Auto-advance 5s after correct so user can read feedback
                 LaunchedEffect(vm.index, vm.isCurrentComplete()) {
                     if (vm.isCurrentComplete()) {
-                        delay(600)
-                        if (vm.index < vm.lesson.activities.lastIndex) vm.onNext()
+                        kotlinx.coroutines.delay(5000)  // 5 seconds
+                        if (vm.index < vm.lesson.activities.lastIndex) {
+                            vm.onNext()
+                        }
                     }
                 }
             }
+
 
             is MatchActivity -> {
                 com.ailingo.app.lesson.ui.activities.MatchPairsCard(
                     act = act,
                     currentMatches = vm.matchSelections,
                     onPick = { i, choice -> vm.onMatchPick(i, choice, act) },
-                    feedback = vm.feedback
+                    feedback = vm.feedback,
+                    wrongMatchRowIndex = vm.wrongMatchRowIndex,
+                    wrongMatchChoice = vm.wrongMatchChoice
                 )
             }
+
 
             is FillBlankActivity -> {
                 com.ailingo.app.lesson.ui.activities.FillBlankCard(

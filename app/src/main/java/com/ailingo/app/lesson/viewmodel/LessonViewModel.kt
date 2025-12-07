@@ -22,6 +22,12 @@ class LessonViewModel(
 ) : ViewModel() {
 
     // ----- Lesson & progress state -----
+    var wrongMatchRowIndex by mutableStateOf<Int?>(null)
+        private set
+
+    var wrongMatchChoice by mutableStateOf<String?>(null)
+        private set
+
     var lesson: LessonDefinition by mutableStateOf(HardcodedLessons.lesson1)
         private set
 
@@ -42,6 +48,9 @@ class LessonViewModel(
         private set
 
     // ----- Transient UI -----
+    var selectedMcqText by mutableStateOf<String?>(null)
+        private set
+
     var feedback by mutableStateOf<String?>(null)
         private set
 
@@ -61,7 +70,7 @@ class LessonViewModel(
     val isLessonCompleted: Boolean
         get() = completed.all { it }
 
-    // ----- Lesson switching (kept, but now sets lessonId explicitly) -----
+    // ----- Lesson switching -----
     fun loadLessonTwo() {
         lesson = HardcodedLessons.lesson2
         lessonId = "lesson2"
@@ -73,7 +82,7 @@ class LessonViewModel(
         resetTransientForIndex(0)
     }
 
-    // If you later add more lessons, expose a generic setter:
+    // Generic setter if you add more lessons
     fun loadLesson(id: String, def: LessonDefinition) {
         lesson = def
         lessonId = id
@@ -92,11 +101,20 @@ class LessonViewModel(
         fillChosen = null
         userFreePrompt = ""
         showMockReply = false
+        selectedMcqText = null
+        wrongMatchRowIndex = null
+        wrongMatchChoice = null
+
     }
 
     private fun markDone() {
         completed[index] = true
         maybeSyncCompletion()
+    }
+
+    /** Option 1: explicit helper used by MCQ when correct */
+    private fun markCurrentComplete() {
+        markDone()
     }
 
     /** If the lesson is fully completed, write progress to Firestore (idempotent). */
@@ -108,10 +126,13 @@ class LessonViewModel(
         viewModelScope.launch {
             try {
                 // default XP = 10 (tweak per-lesson if needed)
-                progressRepo.markLessonCompleted(courseId = courseId, lessonId = lessonId, xpReward = 10)
-                // success: nothing else to do; Learn screen should react via its listener
+                progressRepo.markLessonCompleted(
+                    courseId = courseId,
+                    lessonId = lessonId,
+                    xpReward = 10
+                )
             } catch (t: Throwable) {
-                // allow retry if write failed (e.g., emulator not running yet)
+                // allow retry if write failed
                 completionSynced = false
                 feedback = t.message ?: "Failed to save progress"
             } finally {
@@ -124,10 +145,6 @@ class LessonViewModel(
     fun forceSyncCompletion() {
         if (isLessonCompleted) {
             maybeSyncCompletion()
-        } else {
-            // If you want the button to auto-complete remaining steps, uncomment:
-            // completed.fill(true)
-            // maybeSyncCompletion()
         }
     }
 
@@ -146,13 +163,17 @@ class LessonViewModel(
         }
     }
 
-    // ----------------- Activity handlers (unchanged in behavior) -----------------
+    // ----------------- Activity handlers -----------------
     /* MCQ */
     fun onSelectMcq(option: McqOption, act: McqActivity) {
         if (completed[index]) return
+
+        // remember which option user tapped (for red highlight)
+        selectedMcqText = option.text
+
         if (option.correct) {
+            markCurrentComplete()
             feedback = act.feedbackCorrect
-            markDone()
         } else {
             if (hearts > 0) hearts--
             feedback = act.feedbackIncorrect
@@ -179,8 +200,14 @@ class LessonViewModel(
             }
         } else {
             if (hearts > 0) hearts--
+
+            // Remember WRONG choice for UI coloring
+            wrongMatchRowIndex = rowIndex
+            wrongMatchChoice = rightChoice
+
             feedback = "❌ ${act.wrongHint}"
         }
+
     }
 
     /* FILL BLANK */

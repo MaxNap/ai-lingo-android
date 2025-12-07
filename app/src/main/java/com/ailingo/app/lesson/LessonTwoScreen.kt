@@ -95,9 +95,12 @@ fun LessonTwoScreen(
                     act = act,
                     currentMatches = vm.matchSelections,
                     onPick = { i, choice -> vm.onMatchPick(i, choice, act) },
-                    feedback = vm.feedback
+                    feedback = vm.feedback,
+                    wrongMatchRowIndex = vm.wrongMatchRowIndex,
+                    wrongMatchChoice = vm.wrongMatchChoice
                 )
             }
+
 
             is FillBlankActivity -> {
                 com.ailingo.app.lesson.ui.activities.FillBlankCard(
