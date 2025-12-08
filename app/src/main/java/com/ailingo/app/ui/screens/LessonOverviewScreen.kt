@@ -10,9 +10,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,15 +19,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.ailingo.app.lesson.data.ProgressRepository
 import kotlinx.coroutines.flow.collectLatest
-import androidx.compose.runtime.remember
-
 
 // --- Simple model for each sub-lesson row ---
 private data class SubLesson(
@@ -64,7 +61,6 @@ private val gettingStarted = listOf(
     )
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LessonOverviewScreen(
     navController: NavController,
@@ -87,24 +83,32 @@ fun LessonOverviewScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "Getting Started",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
-                },
-                navigationIcon = {
+            // Custom header matching Figma (light blue band with back + title)
+            Surface(
+                color = Color(0xFFEAF2FF),
+                shadowElevation = 0.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Getting Started",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
                 }
-            )
+            }
         }
     ) { inner ->
         Column(
@@ -113,12 +117,6 @@ fun LessonOverviewScreen(
                 .padding(horizontal = 16.dp)
                 .fillMaxSize()
         ) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Start with the basics and unlock more lessons as you go.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
             Spacer(Modifier.height(16.dp))
 
             LazyColumn(
@@ -143,11 +141,11 @@ fun LessonOverviewScreen(
                         description = item.description,
                         completed = completed,
                         unlocked = unlocked,
+                        isPrimary = index == 0,          // first card = blue style
                         onClick = {
                             if (!unlocked) return@OverviewRowCard
 
                             // Navigate to the correct lesson.
-                            // Right now only Lesson 1 exists.
                             when (item.id) {
                                 "lesson1" -> navController.navigate("lesson/1/1")
                                 // "lesson2" -> navController.navigate("lesson/1/2")
@@ -158,18 +156,6 @@ fun LessonOverviewScreen(
                     )
                 }
             }
-
-            Spacer(Modifier.height(12.dp))
-            Button(
-                onClick = { navController.navigate("lesson/1/1") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Text("Start Lesson 1")
-            }
-            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -180,29 +166,33 @@ private fun OverviewRowCard(
     description: String,
     completed: Boolean,
     unlocked: Boolean,
+    isPrimary: Boolean,
     onClick: () -> Unit
 ) {
+    // Backgrounds:
+    //  - Completed: soft green
+    //  - First card: light blue
+    //  - Others: light grey
     val bg = when {
-        completed -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.surface
+        completed -> Color(0xFFDFF7DF)
+        isPrimary -> Color(0xFFEAF2FF)
+        else -> Color(0xFFF4F4F4)
     }
 
-    val onBg = when {
-        completed -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onSurface
-    }
+    val textColor = Color(0xFF222222)
 
     Surface(
-        tonalElevation = 1.dp,
-        shadowElevation = 1.dp,
-        shape = RoundedCornerShape(16.dp),
+        tonalElevation = 2.dp,
+        shadowElevation = 4.dp,
+        shape = RoundedCornerShape(20.dp),
         color = bg,
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 120.dp)         // bigger cards
             .clickable(enabled = unlocked) { onClick() }
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
@@ -210,27 +200,29 @@ private fun OverviewRowCard(
             ) {
                 Text(
                     title,
-                    style = MaterialTheme.typography.titleSmall.copy(
+                    style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
-                    color = onBg
+                    color = textColor
                 )
-                Spacer(Modifier.height(4.dp))
+
+                Spacer(Modifier.height(8.dp))
+
                 Text(
                     description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = onBg.copy(alpha = 0.8f)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor.copy(alpha = 0.85f)
                 )
 
                 if (completed) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     AssistChip(
-                        onClick = { /* no-op */ },
+                        onClick = { },
                         label = { Text("Completed") },
                         leadingIcon = { Text("✓") },
                         colors = AssistChipDefaults.assistChipColors(
-                            labelColor = onBg,
-                            leadingIconContentColor = onBg
+                            labelColor = textColor,
+                            leadingIconContentColor = textColor
                         )
                     )
                 }

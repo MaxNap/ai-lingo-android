@@ -112,10 +112,13 @@ class LessonViewModel(
         maybeSyncCompletion()
     }
 
-    /** Option 1: explicit helper used by MCQ when correct */
-    private fun markCurrentComplete() {
-        markDone()
+    /** Allow UI to mark the current activity as completed (Intro/Recap, etc.). */
+    fun markCurrentComplete() {
+        if (!completed[index]) {
+            markDone()
+        }
     }
+
 
     /** If the lesson is fully completed, write progress to Firestore (idempotent). */
     private fun maybeSyncCompletion() {
@@ -142,11 +145,15 @@ class LessonViewModel(
     }
 
     /** Optional CTA hook for a "Finish lesson" button to force the write now. */
+    /** Called from the Recap screen / Finish button.
+     *  Marks all activities as done and syncs progress once.
+     */
     fun forceSyncCompletion() {
-        if (isLessonCompleted) {
-            maybeSyncCompletion()
-        }
+        // Treat reaching the recap as finishing the lesson
+        completed.fill(true)
+        maybeSyncCompletion()
     }
+
 
     // ----------------- Navigation -----------------
     fun onNext() {

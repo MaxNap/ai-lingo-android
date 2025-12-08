@@ -73,10 +73,17 @@ fun LessonOneScreen(
     ) {
         when (act) {
             is IntroActivity -> {
+                // Mark intro as completed when shown (no interaction needed here)
+                LaunchedEffect(vm.index) {
+                    vm.markCurrentComplete()
+                }
+
                 com.ailingo.app.lesson.ui.activities.IntroCard(
-                    heading = act.heading, bullets = act.bullets
+                    heading = act.heading,
+                    bullets = act.bullets
                 )
             }
+
 
             is McqActivity -> {
                 MultipleChoiceCard(
@@ -120,7 +127,7 @@ fun LessonOneScreen(
                 // Optional auto-advance after correct fill-in
                 LaunchedEffect(vm.index, vm.fillChosen) {
                     if (vm.fillChosen == act.correct) {
-                        delay(600)
+                        delay(5000)
                         if (vm.index < vm.lesson.activities.lastIndex) vm.onNext()
                     }
                 }
@@ -138,8 +145,14 @@ fun LessonOneScreen(
             }
 
             is RecapActivity -> {
+                // When user reaches Recap, mark the final step complete
+                LaunchedEffect(vm.index) {
+                    vm.markCurrentComplete()
+                }
+
                 com.ailingo.app.lesson.ui.activities.RecapCard(act)
             }
+
         }
     }
 }

@@ -1,4 +1,3 @@
-// functions/src/index.ts
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import dayjs from "dayjs";
@@ -27,8 +26,15 @@ export const onProgressWrite = functions
     const after = change.after.exists ? change.after.data() : null;
     if (!after) return;
 
-    // Only act when lesson is completed
-    if (after.status !== "completed") return;
+    // Accept both patterns:
+    //  - { status: "completed" }
+    //  - { completed: true }
+    const status = after.status as string | undefined;
+    const completedFlag = after.completed === true;
+
+    if (status !== "completed" && !completedFlag) {
+      return;
+    }
 
     const progressRef = db.doc(`users/${uid}/progress/${context.params.docId}`);
     const userRef = db.doc(`users/${uid}`);
@@ -73,17 +79,26 @@ export const onProgressWrite = functions
       }
 
       // Update user doc
+      // 🔥 IMPORTANT: these field names now match HomeScreen:
+      //   xp, streak, lessonsCompleted
+      // Update user doc  👇 CHANGE THIS PART
       tx.set(
         userRef,
         {
-          xpTotal: admin.firestore.FieldValue.increment(xpAward),
+          // use "xp" to match your existing schema
+          xp: admin.firestore.FieldValue.increment(xpAward),
+
+          // new field: how many lessons finished
           lessonsCompletedCount: admin.firestore.FieldValue.increment(1),
+
           lastActiveDate: today,
           streak,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
+
+
 
       // Mark progress as finalized
       tx.set(
