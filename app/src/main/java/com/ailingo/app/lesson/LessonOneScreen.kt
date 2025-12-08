@@ -25,10 +25,9 @@ fun LessonOneScreen(
         is RecapActivity -> true
 
         is McqActivity -> {
-            vm.isCurrentComplete() ||
-                    (vm.feedback?.contains("✅") == true) ||
-                    (vm.feedback?.startsWith("🎉") == true)
+            vm.isCurrentComplete()
         }
+
 
         is MatchActivity -> {
             // Allow when all rows are matched (and/or VM already marked done)
@@ -68,8 +67,10 @@ fun LessonOneScreen(
             vm.forceSyncCompletion()
             onLessonComplete()
         },
+
         isLessonCompleted = vm.isLessonCompleted,
-        syncing = vm.syncing
+        syncing = vm.syncing,
+        onRetry = { vm.restartLesson() }
     ) {
         when (act) {
             is IntroActivity -> {

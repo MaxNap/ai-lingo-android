@@ -8,19 +8,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,10 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.ailingo.app.R
-import com.ailingo.app.lesson.data.ProgressRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 private val BrandBlue = Color(0xFF1AB8E2)
@@ -47,6 +42,60 @@ data class UserStatsUi(
     val lessonsCompleted: Int = 0
 )
 
+private data class LevelInfo(
+    val level: Int,
+    val label: String,
+    val minXp: Int,
+    val maxXp: Int? // null = no upper limit (max level in preview)
+)
+
+/**
+ * Simple level system:
+ * - Level 0:   0–9 XP        (New Learner)
+ * - Level 1:  10–29 XP      (Getting Started)
+ * - Level 2:  30–59 XP      (Prompt Explorer)
+ * - Level 3:  60–99 XP      (AI Buddy)
+ * - Level 4+: 100+ XP       (Prompt Pro)
+ */
+private fun getLevelInfo(xp: Int): LevelInfo {
+    return when {
+        xp < 10 -> LevelInfo(
+            level = 0,
+            label = "New Learner",
+            minXp = 0,
+            maxXp = 10
+        )
+
+        xp < 30 -> LevelInfo(
+            level = 1,
+            label = "Getting Started",
+            minXp = 10,
+            maxXp = 30
+        )
+
+        xp < 60 -> LevelInfo(
+            level = 2,
+            label = "Prompt Explorer",
+            minXp = 30,
+            maxXp = 60
+        )
+
+        xp < 100 -> LevelInfo(
+            level = 3,
+            label = "AI Buddy",
+            minXp = 60,
+            maxXp = 100
+        )
+
+        else -> LevelInfo(
+            level = 4,
+            label = "Prompt Pro",
+            minXp = 100,
+            maxXp = null
+        )
+    }
+}
+
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -54,9 +103,6 @@ fun HomeScreen(
 ) {
     val user = FirebaseAuth.getInstance().currentUser
     val uid = user?.uid
-
-    val progressRepo = remember { ProgressRepository() }
-    val scope = rememberCoroutineScope()
 
     // Load stats from Firestore once per uid
     val stats by produceState(
@@ -97,6 +143,20 @@ fun HomeScreen(
     }
     val borderWidth = 4.dp
 
+    val levelInfo = remember(stats.xp) { getLevelInfo(stats.xp) }
+
+    // Progress between current level min and next level max
+    val levelProgress: Float = remember(stats.xp, levelInfo) {
+        val maxXp = levelInfo.maxXp
+        if (maxXp == null) {
+            1f // Max level in this preview
+        } else {
+            val span = (maxXp - levelInfo.minXp).coerceAtLeast(1)
+            val gained = (stats.xp - levelInfo.minXp).coerceAtLeast(0)
+            (gained.toFloat() / span.toFloat()).coerceIn(0f, 1f)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -132,7 +192,7 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Welcome back to AI-Lingo",
+            text = "Welcome back to AILingo",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -143,6 +203,7 @@ fun HomeScreen(
         Surface(
             shape = RoundedCornerShape(24.dp),
             tonalElevation = 4.dp,
+            color = Color(0xFFEDF4FF),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -182,39 +243,82 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // DEBUG button to test progress + Cloud Function
-        var debugMessage by remember { mutableStateOf<String?>(null) }
-
-        Button(
-            onClick = {
-                debugMessage = "Sending progress…"
-                scope.launch {
-                    try {
-                        progressRepo.markLessonCompleted(
-                            courseId = "courseA",
-                            lessonId = "lesson1",
-                            xpReward = 10
-                        )
-                        debugMessage = "OK: progress written. Check Firestore & Cloud Function."
-                    } catch (t: Throwable) {
-                        debugMessage = "Error: ${t.message}"
-                    }
-                }
-            },
+        // Level section
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            tonalElevation = 4.dp,
+            color = Color(0xFFEDF4FF),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("DEBUG: Mark Lesson 1 Completed")
-        }
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Text(
+                    text = "Your level",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
 
-        if (debugMessage != null) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = debugMessage!!,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Level ${levelInfo.level}",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = levelInfo.label,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Text(
+                        text = "${stats.xp} XP",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                LinearProgressIndicator(
+                    progress = { levelProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(999.dp)),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    color = BrandBlue
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                val nextText = if (levelInfo.maxXp == null) {
+                    "You’ve reached the top level in this preview."
+                } else {
+                    val xpToNext = (levelInfo.maxXp - stats.xp).coerceAtLeast(0)
+                    "$xpToNext XP to reach level ${levelInfo.level + 1}"
+                }
+
+                Text(
+                    text = nextText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

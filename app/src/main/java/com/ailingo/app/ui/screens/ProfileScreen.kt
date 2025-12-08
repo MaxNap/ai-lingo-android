@@ -59,9 +59,6 @@ fun ProfileScreen(
 ) {
     val user = FirebaseAuth.getInstance().currentUser
 
-    // 🔥 Added for ping test
-    var pingLoading by remember { mutableStateOf(false) }
-    val functions = remember { com.google.firebase.functions.FirebaseFunctions.getInstance("us-central1") }
 
     val gradientBrush = remember {
         Brush.sweepGradient(
@@ -206,37 +203,6 @@ fun ProfileScreen(
             ProfileButton("Terms of Service") { activeSection = Section.TermsOfService }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
-
-        // 🔥 DEVELOPER TOOLS
-        ProfileSection("Developer Tools") {
-            ProfileButton(
-                text = if (pingLoading) "Testing ping…" else "Test Cloud Function (ping)",
-                onClick = {
-                    if (!pingLoading) {
-                        val currentUser = FirebaseAuth.getInstance().currentUser
-                        if (currentUser == null) {
-                            Toast.makeText(context, "Must be logged in", Toast.LENGTH_SHORT).show()
-                            return@ProfileButton
-                        }
-
-                        pingLoading = true
-                        functions
-                            .getHttpsCallable("ping")
-                            .call()
-                            .addOnCompleteListener { task ->
-                                pingLoading = false
-                                if (task.isSuccessful) {
-                                    val uid = (task.result?.data as? Map<*, *>)?.get("uid") ?: "unknown"
-                                    Toast.makeText(context, "Ping OK — uid: $uid", Toast.LENGTH_LONG).show()
-                                } else {
-                                    Toast.makeText(context, "Ping failed: ${task.exception?.localizedMessage}", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                    }
-                }
-            )
-        }
 
         Spacer(modifier = Modifier.height(40.dp))
 

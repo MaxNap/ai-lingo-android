@@ -72,13 +72,21 @@ class MainActivity : ComponentActivity() {
                             currentRoute.startsWith("lesson/")
 
                 // Keep highlight correct for profile splash/profile screen
-                val selectedIndex = when (currentRoute) {
-                    Routes.Home   -> 0
-                    Routes.Learn  -> 1
-                    Routes.Studio -> 2
-                    Routes.ProfileScreen -> 3
+                val selectedIndex = when {
+                    currentRoute == Routes.Home -> 0
+
+                    currentRoute == Routes.Learn ||
+                            currentRoute.startsWith(com.ailingo.app.ui.navigation.Routes.LessonOverviewBase) ||
+                            currentRoute.startsWith("lesson/") -> 1   // lesson screens belong to Learn
+
+                    currentRoute == Routes.Studio -> 2
+
+                    currentRoute == Routes.ProfileScreen ||
+                            currentRoute == Routes.ProfileSplash -> 3
+
                     else -> 0
                 }
+
 
                 Scaffold(
                     bottomBar = {

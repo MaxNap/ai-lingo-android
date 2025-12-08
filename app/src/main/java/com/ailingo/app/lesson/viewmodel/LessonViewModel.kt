@@ -40,7 +40,11 @@ class LessonViewModel(
     var hearts by mutableStateOf(3)
         private set
 
+    /** Per-activity completion flags */
     private var completed = BooleanArray(lesson.activities.size) { false }
+
+    /** Completion state for the *current* activity (used for Continue button) */
+    private var currentCompleted by mutableStateOf(false)
 
     /** Prevent double write; pairs with `syncing` UI flag */
     private var completionSynced = false
@@ -66,7 +70,9 @@ class LessonViewModel(
     val progress: Float
         get() = completed.count { it }.toFloat() / lesson.activities.size
 
-    fun isCurrentComplete(): Boolean = completed[index]
+    /** Used by the UI to decide if the Continue button is enabled */
+    fun isCurrentComplete(): Boolean = currentCompleted
+
     val isLessonCompleted: Boolean
         get() = completed.all { it }
 
@@ -81,6 +87,15 @@ class LessonViewModel(
         syncing = false
         resetTransientForIndex(0)
     }
+    fun restartLesson() {
+        index = 0
+        hearts = 3
+        completed = BooleanArray(lesson.activities.size) { false }
+        completionSynced = false
+        syncing = false
+        resetTransientForIndex(0)
+    }
+
 
     // Generic setter if you add more lessons
     fun loadLesson(id: String, def: LessonDefinition) {
@@ -95,7 +110,7 @@ class LessonViewModel(
     }
 
     // ----------------- Helpers -----------------
-    private fun resetTransientForIndex(@Suppress("UNUSED_PARAMETER") newIndex: Int) {
+    private fun resetTransientForIndex(newIndex: Int) {
         feedback = null
         matchSelections.clear()
         fillChosen = null
@@ -105,20 +120,22 @@ class LessonViewModel(
         wrongMatchRowIndex = null
         wrongMatchChoice = null
 
+        // Restore completion state for this activity
+        currentCompleted = completed.getOrNull(newIndex) == true
     }
 
     private fun markDone() {
         completed[index] = true
+        currentCompleted = true
         maybeSyncCompletion()
     }
 
     /** Allow UI to mark the current activity as completed (Intro/Recap, etc.). */
     fun markCurrentComplete() {
-        if (!completed[index]) {
+        if (!currentCompleted) {
             markDone()
         }
     }
-
 
     /** If the lesson is fully completed, write progress to Firestore (idempotent). */
     private fun maybeSyncCompletion() {
@@ -144,16 +161,15 @@ class LessonViewModel(
         }
     }
 
-    /** Optional CTA hook for a "Finish lesson" button to force the write now. */
     /** Called from the Recap screen / Finish button.
      *  Marks all activities as done and syncs progress once.
      */
     fun forceSyncCompletion() {
         // Treat reaching the recap as finishing the lesson
         completed.fill(true)
+        currentCompleted = true
         maybeSyncCompletion()
     }
-
 
     // ----------------- Navigation -----------------
     fun onNext() {
@@ -173,23 +189,24 @@ class LessonViewModel(
     // ----------------- Activity handlers -----------------
     /* MCQ */
     fun onSelectMcq(option: McqOption, act: McqActivity) {
-        if (completed[index]) return
+        if (currentCompleted) return
 
         // remember which option user tapped (for red highlight)
         selectedMcqText = option.text
 
         if (option.correct) {
-            markCurrentComplete()
+            // ✅ This is what unlocks the Continue button
             feedback = act.feedbackCorrect
+            markDone()
         } else {
-            if (hearts > 0) hearts--
+            hearts = (hearts - 1).coerceAtLeast(0)
             feedback = act.feedbackIncorrect
         }
     }
 
     /* MATCH */
     fun onMatchPick(rowIndex: Int, rightChoice: String, act: MatchActivity) {
-        if (completed[index]) return
+        if (currentCompleted) return
 
         val expected = act.rows[rowIndex].rightCorrect
         if (rightChoice == expected) {
@@ -200,33 +217,30 @@ class LessonViewModel(
             }
 
             if (allCorrect) {
+                feedback = "Great matching!"
                 markDone()
-                feedback = "Great matching! ✅"
             } else {
                 feedback = "Correct! Keep going."
             }
         } else {
-            if (hearts > 0) hearts--
+            hearts = (hearts - 1).coerceAtLeast(0)
 
             // Remember WRONG choice for UI coloring
             wrongMatchRowIndex = rowIndex
             wrongMatchChoice = rightChoice
-
-            feedback = "❌ ${act.wrongHint}"
         }
-
     }
 
     /* FILL BLANK */
     fun onFillSelect(choice: String, act: FillBlankActivity) {
-        if (completed[index]) return
+        if (currentCompleted) return
         fillChosen = choice
         if (choice == act.correct) {
+            feedback = "Nice! \"$choice\" is correct."
             markDone()
-            feedback = "✅ Nice! \"$choice\" is correct."
         } else {
-            if (hearts > 0) hearts--
-            feedback = "❌ Try again."
+            hearts = (hearts - 1).coerceAtLeast(0)
+            feedback = "Try again."
         }
     }
 
@@ -236,13 +250,13 @@ class LessonViewModel(
     }
 
     fun onFreePromptSubmit(act: FreePromptActivity) {
-        if (completed[index]) return
+        if (currentCompleted) return
         if (userFreePrompt.trim().length < act.minChars) {
             feedback = act.hint
             return
         }
         showMockReply = true
+        feedback = "Nice! That's a clear prompt."
         markDone()
-        feedback = "Nice! That's a clear prompt. ✅"
     }
 }

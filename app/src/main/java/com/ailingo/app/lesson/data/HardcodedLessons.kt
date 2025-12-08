@@ -23,7 +23,7 @@ object HardcodedLessons {
                     McqOption("The answer from the AI", false),
                     McqOption("The name of the app", false)
                 ),
-                feedbackCorrect = "🎉 Yes! A prompt is what you type to the AI.",
+                feedbackCorrect = "Yes! A prompt is what you type to the AI.",
                 feedbackIncorrect = "Not quite. A prompt is what you send, not what AI gives back."
             ),
             MatchActivity(
@@ -90,7 +90,7 @@ object HardcodedLessons {
                     McqOption("Answer now.", false),
                     McqOption("1234", false)
                 ),
-                feedbackCorrect = "🎉 Nice! That's a friendly start.",
+                feedbackCorrect = "Nice! That's a friendly start.",
                 feedbackIncorrect = "Oops—remember, a greeting should sound natural."
             ),
             MatchActivity(
