@@ -1,5 +1,5 @@
 package com.ailingo.app.ui.screens
-
+// Should be moved to different folder (not in screens)
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch

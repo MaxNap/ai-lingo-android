@@ -70,6 +70,10 @@ dependencies {
     implementation("com.google.firebase:firebase-functions-ktx")   // ← fixes FirebaseFunctions import
     implementation("com.google.firebase:firebase-common-ktx")      // helpful KTX extensions
 
+    // --- Status bar ---
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+
+
     // --- Tests ---
     testImplementation(libs.junit)
 

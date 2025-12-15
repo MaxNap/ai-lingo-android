@@ -1,5 +1,5 @@
 package com.ailingo.app.ui.screens
-
+// Should be moved to different folder (not in screens)
 import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
