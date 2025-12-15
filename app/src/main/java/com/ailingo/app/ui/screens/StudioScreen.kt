@@ -21,8 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ailingo.app.ui.screens.ChatViewModel
 import androidx.compose.material3.TopAppBar
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import androidx.compose.runtime.SideEffect
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.ailingo.app.R
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,50 +36,64 @@ fun StudioScreen(vm: ChatViewModel = viewModel()) {
     val messages by vm.messages.collectAsState()
     var input by remember { mutableStateOf("") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("AI Studio")
-                },
-                colors = TopAppBarDefaults.smallTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            LazyColumn(
-                modifier = Modifier.weight(1f).padding(8.dp)
-            ) {
-                items(messages) { msg ->
-                    val isUser = msg.role == "user"
-                    ChatBubble(text = msg.content, isUser = isUser)
-                }
-            }
-
-            Row(modifier = Modifier.padding(8.dp)) {
-                TextField(
-                    value = input,
-                    onValueChange = { input = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Type a message…") }
-                )
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = {
-                    if (input.isNotBlank()) {
-                        vm.sendMessage(input)
-                        input = ""
-                    }
-                }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.background),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            alpha = 0.5f
+        )
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = { Text("AI Studio")
+                    },
+                    colors = TopAppBarDefaults.smallTopAppBarColors(
+                        containerColor = Color(0xE61AB8E2),
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary
                     )
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+            ) {
+                LazyColumn(
+                    modifier = Modifier.weight(1f).padding(8.dp)
+                ) {
+                    items(messages) { msg ->
+                        val isUser = msg.role == "user"
+                        ChatBubble(text = msg.content, isUser = isUser)
+                    }
+                }
+
+                Row(modifier = Modifier.padding(8.dp)) {
+                    TextField(
+                        value = input,
+                        onValueChange = { input = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Practice here...") }
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        if (input.isNotBlank()) {
+                            vm.sendMessage(input)
+                            input = ""
+                        }
+                    },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0x99CB39C3)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Send"
+                        )
+                    }
                 }
             }
         }
