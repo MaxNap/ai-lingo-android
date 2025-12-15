@@ -84,7 +84,11 @@ fun StudioScreen(vm: ChatViewModel = viewModel()) {
                             vm.sendMessage(input)
                             input = ""
                         }
-                    }) {
+                    },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0x99CB39C3)
+                        )
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send"
