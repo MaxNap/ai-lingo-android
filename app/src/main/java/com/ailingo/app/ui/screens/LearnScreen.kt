@@ -68,8 +68,19 @@ fun LearnScreen(navController: NavController) {
         }
     }
 
+    // ----- Unit progress (Unit 1 = lesson1..lesson4) -----
+    val totalLessons = learnItems.size
+    val completedCount = remember(done) {
+        learnItems.count { item ->
+            val key = "lesson${item.id}"
+            done[key] == true
+        }
+    }
+    val unitProgress = remember(completedCount, totalLessons) {
+        if (totalLessons <= 0) 0f else (completedCount.toFloat() / totalLessons.toFloat()).coerceIn(0f, 1f)
+    }
+
     Scaffold(
-        // bottomBar = { BottomNavBar(...) }  // if you have a global bottom bar, leave it in MainActivity
         containerColor = Color(0xFFF6F7FB) // soft background like Figma
     ) { inner ->
         Column(
@@ -92,7 +103,26 @@ fun LearnScreen(navController: NavController) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.height(20.dp))
+
+            // ✅ Unit progress + bar (Duolingo-like)
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = "Unit 1 progress: $completedCount/$totalLessons lessons",
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { unitProgress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(999.dp)),
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                color = Color(0xFF1AB8E2) // BrandBlue
+            )
+
+            Spacer(Modifier.height(18.dp))
 
             // Levels list
             LazyColumn(
@@ -114,7 +144,6 @@ fun LearnScreen(navController: NavController) {
                             // You can later map different unitIds if needed.
                             navController.navigate(Routes.lessonOverview("1"))
                         }
-
                     )
                 }
             }

@@ -59,40 +59,11 @@ private data class LevelInfo(
  */
 private fun getLevelInfo(xp: Int): LevelInfo {
     return when {
-        xp < 10 -> LevelInfo(
-            level = 0,
-            label = "New Learner",
-            minXp = 0,
-            maxXp = 10
-        )
-
-        xp < 30 -> LevelInfo(
-            level = 1,
-            label = "Getting Started",
-            minXp = 10,
-            maxXp = 30
-        )
-
-        xp < 60 -> LevelInfo(
-            level = 2,
-            label = "Prompt Explorer",
-            minXp = 30,
-            maxXp = 60
-        )
-
-        xp < 100 -> LevelInfo(
-            level = 3,
-            label = "AI Buddy",
-            minXp = 60,
-            maxXp = 100
-        )
-
-        else -> LevelInfo(
-            level = 4,
-            label = "Prompt Pro",
-            minXp = 100,
-            maxXp = null
-        )
+        xp < 10 -> LevelInfo(level = 0, label = "New Learner", minXp = 0, maxXp = 10)
+        xp < 30 -> LevelInfo(level = 1, label = "Getting Started", minXp = 10, maxXp = 30)
+        xp < 60 -> LevelInfo(level = 2, label = "Prompt Explorer", minXp = 30, maxXp = 60)
+        xp < 100 -> LevelInfo(level = 3, label = "AI Buddy", minXp = 60, maxXp = 100)
+        else -> LevelInfo(level = 4, label = "Prompt Pro", minXp = 100, maxXp = null)
     }
 }
 
@@ -120,8 +91,7 @@ fun HomeScreen(
             } else {
                 val xp = (snap.getLong("xpTotal") ?: 0L).toInt()
                 val streak = (snap.getLong("streak") ?: 0L).toInt()
-                val lessonsCompleted =
-                    (snap.getLong("lessonsCompletedCount") ?: 0L).toInt()
+                val lessonsCompleted = (snap.getLong("lessonsCompletedCount") ?: 0L).toInt()
 
                 value = UserStatsUi(
                     xp = xp,
@@ -133,13 +103,7 @@ fun HomeScreen(
     }
 
     val gradientBrush = remember {
-        Brush.sweepGradient(
-            listOf(
-                BrandBlue,
-                BrandPurple,
-                BrandBlue
-            )
-        )
+        Brush.sweepGradient(listOf(BrandBlue, BrandPurple, BrandBlue))
     }
     val borderWidth = 4.dp
 
@@ -156,6 +120,12 @@ fun HomeScreen(
             (gained.toFloat() / span.toFloat()).coerceIn(0f, 1f)
         }
     }
+
+    // Daily goal (simple v1: use total XP capped to goal)
+    val dailyGoalXp = 10
+    val xpToday = remember(stats.xp) { stats.xp.coerceIn(0, dailyGoalXp) }
+    val dailyProgress = remember(xpToday) { (xpToday.toFloat() / dailyGoalXp).coerceIn(0f, 1f) }
+    val goalDone = xpToday >= dailyGoalXp
 
     Column(
         modifier = Modifier
@@ -206,14 +176,10 @@ fun HomeScreen(
             color = Color(0xFFEDF4FF),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Text(
                     text = "Your progress",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Spacer(Modifier.height(16.dp))
 
@@ -252,14 +218,10 @@ fun HomeScreen(
             color = Color(0xFFEDF4FF),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Text(
                     text = "Your level",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -272,9 +234,7 @@ fun HomeScreen(
                     Column {
                         Text(
                             text = "Level ${levelInfo.level}",
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold
-                            )
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
@@ -286,9 +246,7 @@ fun HomeScreen(
 
                     Text(
                         text = "${stats.xp} XP",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
                     )
                 }
 
@@ -318,6 +276,60 @@ fun HomeScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Daily goal section (Option B)
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            tonalElevation = 4.dp,
+            color = if (goalDone) Color(0xFFE9F8EF) else Color(0xFFEDF4FF),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "Daily goal",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                Text(
+                    text = "Daily goal: $dailyGoalXp XP",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                LinearProgressIndicator(
+                    progress = { dailyProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(999.dp)),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    color = if (goalDone) Color(0xFF2DBF6C) else BrandBlue
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "You earned $xpToday/$dailyGoalXp XP today",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (goalDone) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Goal completed",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = Color(0xFF2DBF6C)
+                    )
+                }
             }
         }
 
