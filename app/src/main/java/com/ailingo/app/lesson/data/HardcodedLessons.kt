@@ -79,7 +79,7 @@ object HardcodedLessons {
                 )
             ),
             FillBlankActivity(
-                sentenceWithBlank = "When you first talk to AI, you can start with _____.",
+                sentenceWithBlank = "When you first talk to AI, you can start with ___.",
                 options = listOf("hello", "goodbye", "error"),
                 correct = "hello"
             ),

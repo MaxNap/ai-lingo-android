@@ -30,25 +30,25 @@ private data class LearnListItem(
 private val learnItems = listOf(
     LearnListItem(
         id = "1",
-        title = "Getting Started",
+        title = "Unit 1: Getting Started",
         tag = "Basics",
         subtitle = "Learn the fundamentals of AI prompting"
     ),
     LearnListItem(
         id = "2",
-        title = "Getting Started",
+        title = "Unit 2: Prompting",
         tag = "Intermediate",
         subtitle = "Build clearer, more powerful prompts"
     ),
     LearnListItem(
         id = "3",
-        title = "Getting Started",
+        title = "Unit 3: Advanced",
         tag = "Advanced",
         subtitle = "Use structure, roles, and context like a pro"
     ),
     LearnListItem(
         id = "4",
-        title = "Getting Started",
+        title = "Unit 4: Expert",
         tag = "Expert",
         subtitle = "Master complex, multi-step prompt strategies"
     )
@@ -212,7 +212,7 @@ private fun LevelCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                PillTag(if (completed) "Completed" else tag)
+                PillTag(tag)
             }
 
             Spacer(Modifier.height(10.dp))

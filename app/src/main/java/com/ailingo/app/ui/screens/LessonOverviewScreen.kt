@@ -148,7 +148,7 @@ fun LessonOverviewScreen(
                             // Navigate to the correct lesson.
                             when (item.id) {
                                 "lesson1" -> navController.navigate("lesson/1/1")
-                                // "lesson2" -> navController.navigate("lesson/1/2")
+                                "lesson2" -> navController.navigate("lesson/1/2")
                                 // "lesson3" -> navController.navigate("lesson/1/3")
                                 // "lesson4" -> navController.navigate("lesson/1/4")
                             }

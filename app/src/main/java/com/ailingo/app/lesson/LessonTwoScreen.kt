@@ -1,12 +1,12 @@
 package com.ailingo.app.lesson
 
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ailingo.app.lesson.model.*
 import com.ailingo.app.lesson.ui.LessonScaffold
 import com.ailingo.app.lesson.viewmodel.LessonViewModel
-import com.ailingo.app.lesson.model.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
 
 @Composable
@@ -24,30 +24,21 @@ fun LessonTwoScreen(
     val act = vm.lesson.activities[vm.index]
     val title = "Lesson 2: ${vm.lesson.title}"
 
-    // Enable "Continue" per-activity using robust signals.
+    // Enable "Continue" per-activity
     val isNextEnabled = when (act) {
         is IntroActivity -> true
         is RecapActivity -> true
 
-        is McqActivity -> {
-            vm.isCurrentComplete() ||
-                    (vm.feedback?.contains("✅") == true) ||
-                    (vm.feedback?.startsWith("🎉") == true)
-        }
+        is McqActivity -> vm.isCurrentComplete()
 
-        is MatchActivity -> {
-            // Allow when all rows are matched (and/or VM already marked done)
+        is MatchActivity ->
             vm.isCurrentComplete() || vm.matchSelections.size == act.rows.size
-        }
 
-        is FillBlankActivity -> {
-            // ✅ Key change: allow Continue when the chosen word is correct
+        is FillBlankActivity ->
             vm.isCurrentComplete() || (vm.fillChosen == act.correct)
-        }
 
-        is FreePromptActivity -> {
+        is FreePromptActivity ->
             vm.isCurrentComplete() || vm.showMockReply
-        }
 
         else -> vm.isCurrentComplete()
     }
@@ -62,16 +53,33 @@ fun LessonTwoScreen(
         },
         onNext = {
             if (vm.index == vm.lesson.activities.lastIndex) {
+                // ✅ Save progress before leaving
+                vm.forceSyncCompletion()
                 onLessonComplete()
             } else {
                 vm.onNext()
             }
-        }
+        },
+
+        // ✅ Finish button (only shows when whole lesson complete)
+        onFinishLesson = {
+            vm.forceSyncCompletion()
+            onLessonComplete()
+        },
+        isLessonCompleted = vm.isLessonCompleted,
+        syncing = vm.syncing,
+
+        // ✅ Try again when hearts == 0 (LessonScaffold shows it)
+        onRetry = { vm.restartLesson() }
     ) {
         when (act) {
             is IntroActivity -> {
+                // ✅ Mark intro as completed when shown (no interaction needed)
+                LaunchedEffect(vm.index) { vm.markCurrentComplete() }
+
                 com.ailingo.app.lesson.ui.activities.IntroCard(
-                    heading = act.heading, bullets = act.bullets
+                    heading = act.heading,
+                    bullets = act.bullets
                 )
             }
 
@@ -79,12 +87,14 @@ fun LessonTwoScreen(
                 com.ailingo.app.lesson.ui.activities.MultipleChoiceCard(
                     act = act,
                     onSelect = { opt -> vm.onSelectMcq(opt, act) },
-                    feedback = vm.feedback
+                    feedback = vm.feedback,
+                    selectedOptionText = vm.selectedMcqText
                 )
-                // Optional auto-advance after correct MCQ
+
+                // Optional auto-advance after correct
                 LaunchedEffect(vm.index, vm.isCurrentComplete()) {
                     if (vm.isCurrentComplete()) {
-                        delay(600)
+                        delay(1500)
                         if (vm.index < vm.lesson.activities.lastIndex) vm.onNext()
                     }
                 }
@@ -101,7 +111,6 @@ fun LessonTwoScreen(
                 )
             }
 
-
             is FillBlankActivity -> {
                 com.ailingo.app.lesson.ui.activities.FillBlankCard(
                     act = act,
@@ -109,10 +118,11 @@ fun LessonTwoScreen(
                     onChoose = { s -> vm.onFillSelect(s, act) },
                     feedback = vm.feedback
                 )
-                // Optional Auto-advance after correct fill in
+
+                // Optional auto-advance after correct fill
                 LaunchedEffect(vm.index, vm.fillChosen) {
                     if (vm.fillChosen == act.correct) {
-                        delay(600)
+                        delay(1500)
                         if (vm.index < vm.lesson.activities.lastIndex) vm.onNext()
                     }
                 }
@@ -130,6 +140,9 @@ fun LessonTwoScreen(
             }
 
             is RecapActivity -> {
+                // ✅ Mark recap as completed when shown (so lesson completes)
+                LaunchedEffect(vm.index) { vm.markCurrentComplete() }
+
                 com.ailingo.app.lesson.ui.activities.RecapCard(act)
             }
         }
